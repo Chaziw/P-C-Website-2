@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pip &amp; Clef — There is a world hidden between the notes</title>
+<meta name="description" content="Pip & Clef: illustrated adventure stories for ages 5–11 where music theory is the magic of a living world. Fly through the Resonance and meet the first three books.">
+<meta property="og:title" content="Pip & Clef — There is a world hidden between the notes">
+<meta property="og:description" content="Illustrated music-theory adventures for ages 5–11. Fly through the Resonance.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="media/poster-01.jpg">
+<link rel="preload" as="image" href="media/poster-01.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9D%84%9E%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Lora:ital,wght@0,400..700;1,400..600&family=Nunito+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper-0:#FBF6EA; --paper-1:#F6EEDC; --ink-900:#3A2C1E; --ink-700:#5A4632;
+    --rust-500:#BE5A2E; --rust-600:#A84E26; --brass-500:#C0973F; --gold-glow:#EBCE86;
+    --sage-500:#6B7A52; --slate-500:#7E8E99; --mist-100:#DDE4E8; --mustard-500:#CD9A3C;
+    --ease-soft:cubic-bezier(.33,0,.2,1);
+    --shadow-md:0 10px 30px rgba(58,44,30,.28);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:auto}
+  body{background:#241a10;color:var(--paper-0);font-family:'Lora',Georgia,serif;
+       -webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+  /* ── fixed viewport stage ── */
+  #stage{position:fixed;inset:0;overflow:hidden;background:#241a10}
+  #stage .layer{position:absolute;inset:0}
+  #stage video,#stage img.still{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    min-width:100%;min-height:100%;width:auto;height:auto;object-fit:cover;
+    width:100%;height:100%;
+  }
+  .layer{opacity:0;transition:none}
+  .layer.active{opacity:1}
+
+  /* ── copy overlays ── */
+  .copy{
+    position:fixed;left:0;right:0;bottom:0;z-index:5;
+    padding:0 clamp(20px,6vw,72px) calc(clamp(40px,7vh,84px) + env(safe-area-inset-bottom));
+    max-width:720px;opacity:0;transform:translateY(18px);pointer-events:none;
+    transition:opacity .45s var(--ease-soft),transform .45s var(--ease-soft);
+  }
+  .copy::before{
+    content:'';position:absolute;inset:-46vh 0 0 0;z-index:-1;pointer-events:none;
+    background:linear-gradient(to top,rgba(36,24,12,.82) 0%,rgba(36,24,12,.55) 38%,rgba(36,24,12,0) 100%);
+  }
+  .copy.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+  .eyebrow{
+    font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:11px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--gold-glow);margin-bottom:12px;
+  }
+  .copy h2,.copy h1{
+    font-family:'Newsreader',serif;font-weight:600;line-height:1.12;
+    font-size:clamp(28px,7.2vw,52px);margin-bottom:12px;text-wrap:balance;
+    text-shadow:0 2px 24px rgba(36,24,12,.45);
+  }
+  .copy p{font-size:clamp(15px,3.9vw,18px);line-height:1.6;color:#F3E9D5;max-width:56ch;
+    text-shadow:0 1px 14px rgba(36,24,12,.5)}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .tag{
+    font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;
+    padding:5px 12px;border-radius:999px;border:1px solid rgba(235,206,134,.45);
+    color:var(--gold-glow);background:rgba(58,44,30,.35);backdrop-filter:blur(2px);
+  }
+  .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;align-items:center}
+  .btn{
+    font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:.02em;
+    display:inline-block;padding:14px 26px;border-radius:999px;text-decoration:none;
+    transition:transform .15s var(--ease-soft),background .15s var(--ease-soft);
+  }
+  .btn-primary{background:var(--rust-500);color:#FFF6E8;box-shadow:var(--shadow-md)}
+  .btn-primary:hover{background:var(--rust-600);transform:translateY(-2px)}
+  .btn-primary:active{transform:translateY(1px) scale(.99)}
+  .btn-ghost{color:var(--gold-glow);border:1px solid rgba(235,206,134,.55)}
+  .btn-ghost:hover{background:rgba(235,206,134,.12)}
+  .smallnote{font-family:'Nunito Sans',sans-serif;font-size:12px;color:#D8C9AC;margin-top:10px}
+
+  /* scroll hint */
+  #hint{position:fixed;left:50%;transform:translateX(-50%);
+    bottom:calc(12px + env(safe-area-inset-bottom));z-index:6;
+    font-family:'Nunito Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.22em;
+    text-transform:uppercase;color:rgba(235,206,134,.8);opacity:1;transition:opacity .6s}
+  #hint.gone{opacity:0}
+  #hint .chev{display:block;text-align:center;font-size:14px;animation:drift 2.2s var(--ease-soft) infinite}
+  @keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+  /* progress dots */
+  #dots{position:fixed;right:calc(10px + env(safe-area-inset-right));top:50%;
+    transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;gap:10px}
+  #dots i{width:6px;height:6px;border-radius:50%;background:rgba(235,206,134,.35);
+    transition:background .3s,transform .3s}
+  #dots i.on{background:var(--gold-glow);transform:scale(1.45)}
+
+  /* scroll runway */
+  #runway{position:relative;z-index:1;visibility:hidden}
+
+  /* stills-fallback mode */
+  body.stills-mode .layer{transition:opacity .8s var(--ease-soft)}
+
+  /* hidden SEO copy */
+  #seo{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+  @media (prefers-reduced-motion:reduce){
+    .copy{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- Crawlable copy (visually hidden; engine keeps it for crawlers & screen readers) -->
+<div id="seo">
+  <h1>Pip &amp; Clef — there is a world hidden between the notes.</h1>
+  <p>In the spaces music leaves behind lies the Resonance — a living world held together by one Great Score. Its pages are lost, and two friends must bring them home. Illustrated adventure stories for ages 5–11, ABRSM Prep–Grade 1.</p>
+  <h2>Where every adventure begins</h2>
+  <p>Deep in a hollow hill, Professor Crotchet sits in his study with the two friends listening closely. He explains that something in the Resonance has gone wrong. “That,” he says, “you will have to discover for yourselves.” Then he strikes the tuning fork.</p>
+  <h2>Book one · The Clockwork Moors — pulse and beat</h2>
+  <p>Every mill and machine of the Moors once moved to one shared beat — until the great Pendulum fell still, and nothing would fit together again.</p>
+  <h2>Book two · The Stave Islands — the stave and note names</h2>
+  <p>Five islands rest in a bright sea, each with its own name and voice — but the Treble Clef Lighthouse has gone dark, and no one recalls who lives where.</p>
+  <h2>Book three · The Drum Caldera — note and rest values</h2>
+  <p>In a drumming volcanic crater the Calderans speak in sounds long and short — and in the held breaths between them. Then the longest and shortest sounds were stolen, and the meaning fell apart.</p>
+  <h2>First Notes · Collection One</h2>
+  <p>Three worlds. Three pages carried home. Collection One gathers the first three adventures — pulse, the stave, and the lengths of sound — where music theory is lived long before it is ever named.</p>
+  <a href="#preorder">Pre-order Collection One</a>
+</div>
+
+<div id="stage" aria-hidden="true"></div>
+<div id="hint"><span>Scroll to fly</span><span class="chev">𝄢</span></div>
+<div id="dots" aria-hidden="true"></div>
+<div id="runway"></div>
+<div id="copyroot"></div>
+
+<script>
+/* ── Pip & Clef scroll-world engine ─────────────────────────────────────────
+   Timeline = alternating segments: dive(0), conn(0-1), dive(1), conn(1-2)...
+   Each segment maps a scroll span to a video's currentTime. Copy overlays
+   peak during each dive's linger window. Falls back to stills when the
+   visitor prefers reduced motion, saves data, or a clip fails to load.   */
+const CFG = {
+  diveScroll: 1.35,      // viewport-heights of scroll per dive
+  connScroll: 0.85,      // per connector
+  sections: [
+    { id:'resonance', clip:'media/dive-01.mp4', poster:'media/poster-01.jpg', still:'media/still-01.jpg',
+      linger:.5, eyebrow:'PIP & CLEF', h:'There is a world hidden between the notes.', hero:true,
+      body:'In the spaces music leaves behind lies the Resonance — a living world held together by one Great Score. Its pages are lost, and two friends must bring them home.',
+      tags:['Illustrated adventures','Ages 5–11','ABRSM Prep–Grade 1'],
+      ctas:[{label:'Get the books',href:'#preorder',primary:true},{label:'Explore the worlds ↓',href:'#fly'}] },
+    { id:'study', clip:'media/dive-02.mp4', poster:'media/poster-02.jpg', still:'media/still-02.jpg',
+      linger:.55, eyebrow:'WHERE EVERY ADVENTURE BEGINS', h:'It starts with a torn page and a tuning fork.',
+      body:'Deep in a hollow hill, Professor Crotchet sits in his study with the two friends listening closely. He explains that something in the Resonance has gone wrong. “That,” he says, “you will have to discover for yourselves.” Then he strikes the tuning fork.',
+      tags:['Professor Crotchet'] },
+    { id:'moors', clip:'media/dive-03.mp4', poster:'media/poster-03.jpg', still:'media/still-03.jpg',
+      linger:.5, eyebrow:'BOOK ONE · THE CLOCKWORK MOORS', h:'The bridge only holds for those who keep the beat.',
+      body:'Every mill and machine of the Moors once moved to one shared beat — until the great Pendulum fell still, and nothing would fit together again.',
+      tags:['Pulse & beat','ABRSM Grade 1'] },
+    { id:'islands', clip:'media/dive-04.mp4', poster:'media/poster-04.jpg', still:'media/still-04.jpg',
+      linger:.5, eyebrow:'BOOK TWO · THE STAVE ISLANDS', h:'Five islands, and every one had forgotten its name.',
+      body:'Five islands rest in a bright sea, each with its own name and voice — but the Treble Clef Lighthouse has gone dark, and no one recalls who lives where.',
+      tags:['The stave & note names','ABRSM Grade 1'] },
+    { id:'caldera', clip:'media/dive-05.mp4', poster:'media/poster-05.jpg', still:'media/still-05.jpg',
+      linger:.5, eyebrow:'BOOK THREE · THE DRUM CALDERA', h:'Even a silence can be a word.',
+      body:'In a drumming volcanic crater the Calderans speak in sounds long and short — and in the held breaths between them. Then the longest and shortest sounds were stolen, and the meaning fell apart.',
+      tags:['Note & rest values','ABRSM Grade 1'] },
+    { id:'preorder', clip:'media/dive-06.mp4', poster:'media/poster-06.jpg', still:'media/still-06.jpg',
+      linger:.6, scroll:1.6, eyebrow:'FIRST NOTES · COLLECTION ONE', h:'Three worlds. Three pages carried home.',
+      body:'Collection One gathers the first three adventures — pulse, the stave, and the lengths of sound — where music theory is lived long before it is ever named.',
+      tags:['3 books','Ages 5–11','ABRSM Prep–Grade 1'],
+      ctas:[{label:'Pre-order Collection One',href:'mailto:hello@pipandclef.co.uk?subject=Pre-order%20Collection%20One',primary:true}],
+      note:'New adventures, once a season. No spam.' }
+  ],
+  connectors: [
+    { clip:'media/conn-12.mp4', fade:.30 },   // resonance dissolve (tuning fork)
+    { clip:'media/conn-23.mp4', fade:.30 },   // study → Moors: tuning-fork light dissolve
+    { clip:'media/conn-34.mp4', fade:.08 },   // aerial: moors → islands
+    { clip:'media/conn-45.mp4', fade:.08 },   // aerial: islands → caldera
+    { clip:'media/conn-56.mp4', fade:.30 }    // the door home (return dissolve)
+  ]
+};
+
+(function(){
+  const stage = document.getElementById('stage');
+  const runway = document.getElementById('runway');
+  const copyroot = document.getElementById('copyroot');
+  const dots = document.getElementById('dots');
+  const hint = document.getElementById('hint');
+  const vh = () => window.innerHeight;
+  const conn = navigator.connection || {};
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const saveData = conn.saveData === true;
+  let stillsMode = reduced || saveData;
+
+  /* build timeline: seg list {kind, sec/conn index, span} */
+  const segs = [];
+  CFG.sections.forEach((s, i) => {
+    segs.push({kind:'dive', i, span:(s.scroll || CFG.diveScroll)});
+    if (i < CFG.connectors.length) segs.push({kind:'conn', i, span:CFG.connScroll});
+  });
+  const totalSpan = segs.reduce((a,s)=>a+s.span,0);
+  function layoutRunway(){ runway.style.height = (totalSpan*vh() + vh()) + 'px'; }
+  layoutRunway();
+
+  /* media layers */
+  const layers = [];   // one per segment, same order
+  const H264 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.640028"') !== '';
+  const mediaSrc = s => H264 ? s : s.replace(/\.mp4$/, '.webm');
+  function mkVideo(src, poster){
+    const v = document.createElement('video');
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('muted',''); v.setAttribute('playsinline','');
+    if (poster) v.poster = poster;
+    v.src = src;
+    return v;
+  }
+  segs.forEach((seg) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'layer';
+    let v = null, img = null;
+    if (!stillsMode){
+      const src = mediaSrc(seg.kind==='dive' ? CFG.sections[seg.i].clip : CFG.connectors[seg.i].clip);
+      const poster = seg.kind==='dive' ? CFG.sections[seg.i].poster : null;
+      v = mkVideo(src, poster);
+      v.addEventListener('error', () => { seg.broken = true; ensureStill(seg, wrap); });
+      wrap.appendChild(v);
+    }
+    if (seg.kind==='dive'){
+      // poster img under the video for instant first paint
+      img = document.createElement('img');
+      img.className = 'still'; img.alt = '';
+      img.src = CFG.sections[seg.i].poster || CFG.sections[seg.i].still;
+      wrap.insertBefore(img, wrap.firstChild);
+    }
+    stage.appendChild(wrap);
+    layers.push({seg, wrap, v, img, ready:false});
+  });
+  function ensureStill(seg, wrap){
+    if (wrap.querySelector('img.still')) return;
+    const img = document.createElement('img');
+    img.className='still'; img.alt='';
+    img.src = seg.kind==='dive' ? (CFG.sections[seg.i].still || CFG.sections[seg.i].poster)
+                                : (CFG.sections[Math.min(seg.i+1,CFG.sections.length-1)].still);
+    wrap.insertBefore(img, wrap.firstChild);
+  }
+  if (stillsMode){ document.body.classList.add('stills-mode'); layers.forEach(l=>ensureStill(l.seg,l.wrap)); }
+
+  /* copy blocks */
+  const copies = CFG.sections.map((s,i)=>{
+    const el = document.createElement('div');
+    el.className='copy'; el.id = s.id;
+    const H = s.hero ? 'h1' : 'h2';
+    el.innerHTML =
+      `<div class="eyebrow">${s.eyebrow}</div>`+
+      `<${H}>${s.h}</${H}>`+
+      `<p>${s.body}</p>`+
+      (s.tags?`<div class="tags">${s.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:'')+
+      (s.ctas?`<div class="ctas">${s.ctas.map(c=>`<a class="btn ${c.primary?'btn-primary':'btn-ghost'}" href="${c.href}">${c.label}</a>`).join('')}</div>`:'')+
+      (s.note?`<div class="smallnote">${s.note}</div>`:'');
+    copyroot.appendChild(el);
+    const dot=document.createElement('i'); dots.appendChild(dot);
+    return el;
+  });
+  const dotEls=[...dots.children];
+
+  /* blob-fetch videos so currentTime seeking always works (byte-range safe) */
+  async function blobify(l){
+    if (!l.v || l.blobbed) return;
+    try{
+      const r = await fetch(l.v.src.startsWith('blob:')?l.origSrc:l.v.src);
+      if (!r.ok) throw 0;
+      const b = await r.blob();
+      l.origSrc = l.v.src;
+      l.v.src = URL.createObjectURL(b);
+      l.blobbed = true;
+    }catch(e){ /* keep direct src */ }
+  }
+  /* progressive warm-up: first two segments immediately, rest on idle */
+  layers.slice(0,3).forEach(blobify);
+  const warmRest = () => layers.forEach(blobify);
+  if (window.requestIdleCallback) requestIdleCallback(warmRest, {timeout:2500});
+  else setTimeout(warmRest, 1200);
+
+  /* iOS priming: play().pause() unlocks seeking on first gesture */
+  let primed = false;
+  function prime(){
+    if (primed) return; primed = true;
+    layers.forEach(l=>{ if(l.v){ const p=l.v.play(); if(p&&p.then) p.then(()=>l.v.pause()).catch(()=>{}); } });
+  }
+  addEventListener('touchstart', prime, {once:true, passive:true});
+  addEventListener('scroll', prime, {once:true, passive:true});
+
+  /* scrub loop */
+  let targetY = 0, shownCopy = -1, lastSeg = -1;
+  function segFor(progress){
+    let acc = 0;
+    for (let k=0;k<segs.length;k++){
+      const s = segs[k];
+      if (progress <= acc + s.span || k === segs.length-1)
+        return {k, local: Math.min(1, Math.max(0,(progress-acc)/s.span))};
+      acc += s.span;
+    }
+  }
+  function remap(t, linger){
+    /* ease so the camera settles mid-scene while copy peaks */
+    if (!linger) return t;
+    const a = .5 - linger*.35, b = .5 + linger*.35;
+    if (t < a) return (t/a)*.5;
+    if (t > b) return .5 + ((t-b)/(1-b))*.5;
+    return .5;
+  }
+  function frame(){
+    const progress = Math.min(totalSpan, (window.scrollY||0)/vh());
+    const {k, local} = segFor(progress);
+    const seg = segs[k], l = layers[k];
+
+    if (k !== lastSeg){
+      layers.forEach((L,idx)=>{
+        L.wrap.classList.toggle('active', idx===k);
+        L.wrap.style.zIndex = idx===k ? 2 : 1;
+      });
+      /* crossfade neighbours near seams handled below */
+      lastSeg = k;
+    }
+    /* seek */
+    if (l.v && !l.seg.broken && l.v.duration){
+      const s = seg.kind==='dive' ? CFG.sections[seg.i] : null;
+      const t = seg.kind==='dive' ? remap(local, s.linger) : local;
+      const want = t * Math.max(0, l.v.duration - .05);
+      if (Math.abs((l.v.currentTime||0) - want) > 0.033){
+        try{ l.v.currentTime = want; }catch(e){}
+      }
+    }
+    /* crossfade across seams */
+    const fadeSpanIn = .12;
+    if (local > 1-fadeSpanIn && k < segs.length-1){
+      const next = layers[k+1];
+      const f = (local-(1-fadeSpanIn))/fadeSpanIn;
+      const seamFade = seg.kind==='dive' && seg.i<CFG.connectors.length ? CFG.connectors[seg.i].fade
+                       : (segs[k+1] && segs[k+1].kind==='dive' && seg.kind==='conn' ? CFG.connectors[seg.i].fade : .08);
+      if (seamFade >= .2){
+        next.wrap.classList.add('active');
+        next.wrap.style.zIndex = 3;
+        next.wrap.style.opacity = f;
+      }
+    } else if (layers[k+1] && layers[k+1].wrap.style.opacity){
+      layers[k+1].wrap.style.opacity='';
+      layers[k+1].wrap.style.zIndex='';
+      if (lastSeg===k) layers[k+1].wrap.classList.remove('active');
+    }
+
+    /* copy visibility: show during middle of each dive */
+    let show = -1;
+    if (seg.kind==='dive'){
+      const s = CFG.sections[seg.i];
+      const a = s.hero ? 0 : .18, b = s.ctas && !s.hero ? 1 : .88;
+      if (local>=a && local<=b) show = seg.i;
+      if (seg.i===CFG.sections.length-1 && local>.15) show = seg.i; // hold final CTA
+    }
+    if (show !== shownCopy){
+      copies.forEach((c,i)=>c.classList.toggle('visible', i===show));
+      dotEls.forEach((d,i)=>d.classList.toggle('on', i===(show<0?(seg.kind==='conn'?seg.i:0):show)));
+      shownCopy = show;
+    }
+    hint.classList.toggle('gone', (window.scrollY||0) > vh()*.3);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  addEventListener('resize', layoutRunway);
+
+  /* anchor links scroll to a section's dive start */
+  document.addEventListener('click', (e)=>{
+    const a = e.target.closest('a[href^="#"]');
+    if (!a) return;
+    const id = a.getAttribute('href').slice(1);
+    const idx = CFG.sections.findIndex(s=>s.id===id);
+    if (id==='fly'){ e.preventDefault(); window.scrollTo({top:vh()*CFG.sections[0].scroll||vh()*1.35, behavior:'smooth'}); return; }
+    if (idx<0) return;
+    e.preventDefault();
+    let acc=0;
+    for (const s of segs){
+      if (s.kind==='dive' && s.i===idx) break;
+      acc += s.span;
+    }
+    window.scrollTo({top:(acc+.45*(CFG.sections[idx].scroll||CFG.diveScroll))*vh(), behavior:'smooth'});
+  });
+})();
+</script>
+</body>
+</html>
