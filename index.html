@@ -294,7 +294,7 @@ const CFG = {
   addEventListener('scroll', prime, {once:true, passive:true});
 
   /* scrub loop */
-  let targetY = 0, shownCopy = -1, lastSeg = -1;
+  let shownCopy = -1, lastSeg = -1, smoothP = 0, lastTick = 0;
   function segFor(progress){
     let acc = 0;
     for (let k=0;k<segs.length;k++){
@@ -312,8 +312,13 @@ const CFG = {
     if (t > b) return .5 + ((t-b)/(1-b))*.5;
     return .5;
   }
-  function frame(){
-    const progress = Math.min(totalSpan, (window.scrollY||0)/vh());
+  function frame(now){
+    /* smooth the scroll input so scrubbing glides instead of stepping */
+    const target = Math.min(totalSpan, (window.scrollY||0)/vh());
+    const dt = Math.min(64, now - (lastTick || now)); lastTick = now;
+    smoothP += (target - smoothP) * (1 - Math.exp(-dt/90));
+    if (Math.abs(target - smoothP) < .0004) smoothP = target;
+    const progress = smoothP;
     const {k, local} = segFor(progress);
     const seg = segs[k], l = layers[k];
 
@@ -330,8 +335,12 @@ const CFG = {
       const s = seg.kind==='dive' ? CFG.sections[seg.i] : null;
       const t = seg.kind==='dive' ? remap(local, s.linger) : local;
       const want = t * Math.max(0, l.v.duration - .05);
-      if (Math.abs((l.v.currentTime||0) - want) > 0.033){
-        try{ l.v.currentTime = want; }catch(e){}
+      /* never queue a seek behind an unfinished one — that's what stalls scrubbing */
+      if (!l.v.seeking && Math.abs((l.v.currentTime||0) - want) > 0.02){
+        try{
+          if (l.v.fastSeek) l.v.fastSeek(want); /* frame-accurate: clips are all-intra */
+          else l.v.currentTime = want;
+        }catch(e){ try{ l.v.currentTime = want; }catch(_){} }
       }
     }
     /* crossfade across seams */
