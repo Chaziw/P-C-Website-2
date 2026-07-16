@@ -90,12 +90,25 @@
   #hint .chev{display:block;text-align:center;font-size:14px;animation:drift 2.2s var(--ease-soft) infinite}
   @keyframes drift{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
 
-  /* progress dots */
-  #dots{position:fixed;right:calc(10px + env(safe-area-inset-right));top:50%;
-    transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;gap:10px}
-  #dots i{width:6px;height:6px;border-radius:50%;background:rgba(235,206,134,.35);
+  /* progress rail (draggable scrubber) */
+  #rail{position:fixed;right:calc(4px + env(safe-area-inset-right));top:50%;
+    transform:translateY(-50%);z-index:6;width:40px;height:min(48vh,430px);
+    display:flex;align-items:center;justify-content:center;
+    touch-action:none;cursor:pointer;outline:none;-webkit-tap-highlight-color:transparent}
+  #rail .track{position:relative;width:3px;height:100%;border-radius:2px;
+    background:rgba(235,206,134,.22)}
+  #rail .fill{position:absolute;left:0;top:0;width:100%;height:0;border-radius:2px;
+    background:linear-gradient(to bottom,rgba(235,206,134,.85),rgba(192,151,63,.85))}
+  #rail .dot{position:absolute;left:50%;width:7px;height:7px;border-radius:50%;
+    transform:translate(-50%,-50%);background:rgba(235,206,134,.38);
     transition:background .3s,transform .3s}
-  #dots i.on{background:var(--gold-glow);transform:scale(1.45)}
+  #rail .dot.on{background:var(--gold-glow);transform:translate(-50%,-50%) scale(1.5)}
+  #rail .thumb{position:absolute;left:50%;top:0;width:15px;height:15px;border-radius:50%;
+    transform:translate(-50%,-50%);background:var(--gold-glow);
+    box-shadow:0 0 0 3px rgba(58,44,30,.55),0 2px 10px rgba(0,0,0,.35);
+    transition:width .15s var(--ease-soft),height .15s var(--ease-soft)}
+  #rail:hover .thumb,#rail.dragging .thumb,#rail:focus-visible .thumb{width:19px;height:19px}
+  #rail:focus-visible .track{box-shadow:0 0 0 2px rgba(235,206,134,.4)}
 
   /* scroll runway */
   #runway{position:relative;z-index:1;visibility:hidden}
@@ -132,7 +145,7 @@
 
 <div id="stage" aria-hidden="true"></div>
 <div id="hint"><span>Scroll to fly</span><span class="chev">𝄢</span></div>
-<div id="dots" aria-hidden="true"></div>
+<div id="rail" role="slider" tabindex="0" aria-label="Journey progress" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
 <div id="runway"></div>
 <div id="copyroot"></div>
 
@@ -187,7 +200,7 @@ const CFG = {
   const stage = document.getElementById('stage');
   const runway = document.getElementById('runway');
   const copyroot = document.getElementById('copyroot');
-  const dots = document.getElementById('dots');
+  const rail = document.getElementById('rail');
   const hint = document.getElementById('hint');
   const vh = () => window.innerHeight;
   const conn = navigator.connection || {};
@@ -261,10 +274,62 @@ const CFG = {
       (s.ctas?`<div class="ctas">${s.ctas.map(c=>`<a class="btn ${c.primary?'btn-primary':'btn-ghost'}" href="${c.href}">${c.label}</a>`).join('')}</div>`:'')+
       (s.note?`<div class="smallnote">${s.note}</div>`:'');
     copyroot.appendChild(el);
-    const dot=document.createElement('i'); dots.appendChild(dot);
     return el;
   });
-  const dotEls=[...dots.children];
+
+  /* progress rail: draggable thumb + clickable section dots */
+  rail.innerHTML = '<div class="track"><div class="fill"></div><div class="thumb"></div></div>';
+  const track = rail.querySelector('.track');
+  const railFill = rail.querySelector('.fill');
+  const railThumb = rail.querySelector('.thumb');
+  /* fraction of the full timeline at each dive's midpoint */
+  const sectionFrac = CFG.sections.map((s, idx) => {
+    let acc = 0;
+    for (const g of segs){
+      if (g.kind==='dive' && g.i===idx) return (acc + .5*g.span)/totalSpan;
+      acc += g.span;
+    }
+    return 0;
+  });
+  const dotEls = sectionFrac.map((f,i)=>{
+    const d = document.createElement('i');
+    d.className = 'dot';
+    d.style.top = (f*100)+'%';
+    d.title = CFG.sections[i].eyebrow;
+    track.appendChild(d);
+    return d;
+  });
+  function railTo(clientY, smooth){
+    const r = track.getBoundingClientRect();
+    const f = Math.min(1, Math.max(0, (clientY - r.top)/r.height));
+    window.scrollTo({top: f*totalSpan*vh(), behavior: smooth?'smooth':'auto'});
+  }
+  rail.addEventListener('pointerdown', e=>{
+    e.preventDefault();
+    rail.classList.add('dragging');
+    try{ rail.setPointerCapture(e.pointerId); }catch(_){}
+    prime();
+    railTo(e.clientY, false);
+  });
+  rail.addEventListener('pointermove', e=>{
+    if (rail.classList.contains('dragging')) railTo(e.clientY, false);
+  });
+  ['pointerup','pointercancel'].forEach(ev=>
+    rail.addEventListener(ev, ()=>rail.classList.remove('dragging')));
+  rail.addEventListener('keydown', e=>{
+    const p = Math.min(totalSpan, (window.scrollY||0)/vh())/totalSpan;
+    /* nearest section, then step */
+    let cur = 0;
+    sectionFrac.forEach((f,i)=>{ if (Math.abs(f-p) < Math.abs(sectionFrac[cur]-p)) cur = i; });
+    let go = null;
+    if (e.key==='ArrowDown'||e.key==='ArrowRight'||e.key==='PageDown') go = Math.min(sectionFrac.length-1, cur+1);
+    else if (e.key==='ArrowUp'||e.key==='ArrowLeft'||e.key==='PageUp') go = Math.max(0, cur-1);
+    else if (e.key==='Home') go = 0;
+    else if (e.key==='End') go = sectionFrac.length-1;
+    if (go===null) return;
+    e.preventDefault();
+    window.scrollTo({top: sectionFrac[go]*totalSpan*vh(), behavior:'smooth'});
+  });
 
   /* blob-fetch videos so currentTime seeking always works (byte-range safe) */
   async function blobify(l){
@@ -294,7 +359,7 @@ const CFG = {
   addEventListener('scroll', prime, {once:true, passive:true});
 
   /* scrub loop */
-  let shownCopy = -1, lastSeg = -1, smoothP = 0, lastTick = 0;
+  let shownCopy = -1, lastSeg = -1, smoothP = 0, lastTick = 0, lastAria = -1;
   function segFor(progress){
     let acc = 0;
     for (let k=0;k<segs.length;k++){
@@ -374,6 +439,12 @@ const CFG = {
       dotEls.forEach((d,i)=>d.classList.toggle('on', i===(show<0?(seg.kind==='conn'?seg.i:0):show)));
       shownCopy = show;
     }
+    /* move the rail thumb + fill with progress */
+    const pct = (progress/totalSpan)*100;
+    railThumb.style.top = pct+'%';
+    railFill.style.height = pct+'%';
+    const ariaNow = Math.round(pct);
+    if (ariaNow !== lastAria){ rail.setAttribute('aria-valuenow', ariaNow); lastAria = ariaNow; }
     hint.classList.toggle('gone', (window.scrollY||0) > vh()*.3);
     requestAnimationFrame(frame);
   }
