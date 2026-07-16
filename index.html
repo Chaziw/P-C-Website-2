@@ -107,6 +107,9 @@
     transform:translate(-50%,-50%);background:var(--gold-glow);
     box-shadow:0 0 0 3px rgba(58,44,30,.55),0 2px 10px rgba(0,0,0,.35);
     transition:width .15s var(--ease-soft),height .15s var(--ease-soft)}
+  #rail .goal{position:absolute;left:50%;top:0;width:11px;height:11px;border-radius:50%;
+    border:2px solid rgba(235,206,134,.8);background:transparent;
+    transform:translate(-50%,-50%);opacity:0;transition:opacity .25s;pointer-events:none}
   #rail:hover .thumb,#rail.dragging .thumb,#rail:focus-visible .thumb{width:19px;height:19px}
   #rail:focus-visible .track{box-shadow:0 0 0 2px rgba(235,206,134,.4)}
 
@@ -278,10 +281,11 @@ const CFG = {
   });
 
   /* progress rail: draggable thumb + clickable section dots */
-  rail.innerHTML = '<div class="track"><div class="fill"></div><div class="thumb"></div></div>';
+  rail.innerHTML = '<div class="track"><div class="fill"></div><div class="goal"></div><div class="thumb"></div></div>';
   const track = rail.querySelector('.track');
   const railFill = rail.querySelector('.fill');
   const railThumb = rail.querySelector('.thumb');
+  const railGoal = rail.querySelector('.goal');
   /* fraction of the full timeline at each dive's midpoint */
   const sectionFrac = CFG.sections.map((s, idx) => {
     let acc = 0;
@@ -302,6 +306,7 @@ const CFG = {
   function railTo(clientY, smooth){
     const r = track.getBoundingClientRect();
     const f = Math.min(1, Math.max(0, (clientY - r.top)/r.height));
+    paceMode = 'jump';
     window.scrollTo({top: f*totalSpan*vh(), behavior: smooth?'smooth':'auto'});
   }
   rail.addEventListener('pointerdown', e=>{
@@ -328,6 +333,7 @@ const CFG = {
     else if (e.key==='End') go = sectionFrac.length-1;
     if (go===null) return;
     e.preventDefault();
+    paceMode = 'jump';
     window.scrollTo({top: sectionFrac[go]*totalSpan*vh(), behavior:'smooth'});
   });
 
@@ -358,8 +364,15 @@ const CFG = {
   addEventListener('touchstart', prime, {once:true, passive:true});
   addEventListener('scroll', prime, {once:true, passive:true});
 
-  /* scrub loop */
-  let shownCopy = -1, lastSeg = -1, smoothP = 0, lastTick = 0, lastAria = -1;
+  /* scrub loop.
+     The scroll position is treated as a DESTINATION: the journey travels
+     toward it at a capped pace so scenes always play out as intended,
+     no matter how hard the visitor flicks the wheel. Deliberate jumps
+     (rail drag/click, chapter links) get a faster but still smooth pace. */
+  const PACE = { scroll: 0.9, jump: 2.4 };   // timeline units (viewport-heights) per second
+  let paceMode = 'scroll';
+  let shownCopy = -1, lastSeg = -1, lastTick = 0, lastAria = -1;
+  let smoothP = Math.min(totalSpan, (window.scrollY||0)/vh());   // start where the browser restored us
   function segFor(progress){
     let acc = 0;
     for (let k=0;k<segs.length;k++){
@@ -378,11 +391,15 @@ const CFG = {
     return .5;
   }
   function frame(now){
-    /* smooth the scroll input so scrubbing glides instead of stepping */
+    /* chase the scroll destination at a capped, cinematic pace */
     const target = Math.min(totalSpan, (window.scrollY||0)/vh());
     const dt = Math.min(64, now - (lastTick || now)); lastTick = now;
-    smoothP += (target - smoothP) * (1 - Math.exp(-dt/90));
-    if (Math.abs(target - smoothP) < .0004) smoothP = target;
+    const gap = target - smoothP;
+    let step = gap * (1 - Math.exp(-dt/120));
+    const maxStep = PACE[paceMode] * dt/1000;
+    if (Math.abs(step) > maxStep) step = Math.sign(step)*maxStep;
+    smoothP += step;
+    if (Math.abs(target - smoothP) < .0004){ smoothP = target; paceMode = 'scroll'; }
     const progress = smoothP;
     const {k, local} = segFor(progress);
     const seg = segs[k], l = layers[k];
@@ -439,10 +456,12 @@ const CFG = {
       dotEls.forEach((d,i)=>d.classList.toggle('on', i===(show<0?(seg.kind==='conn'?seg.i:0):show)));
       shownCopy = show;
     }
-    /* move the rail thumb + fill with progress */
+    /* move the rail thumb + fill with progress; ghost ring marks the destination */
     const pct = (progress/totalSpan)*100;
     railThumb.style.top = pct+'%';
     railFill.style.height = pct+'%';
+    railGoal.style.top = (target/totalSpan*100)+'%';
+    railGoal.style.opacity = Math.abs(gap) > .15 ? 1 : 0;
     const ariaNow = Math.round(pct);
     if (ariaNow !== lastAria){ rail.setAttribute('aria-valuenow', ariaNow); lastAria = ariaNow; }
     hint.classList.toggle('gone', (window.scrollY||0) > vh()*.3);
@@ -457,9 +476,10 @@ const CFG = {
     if (!a) return;
     const id = a.getAttribute('href').slice(1);
     const idx = CFG.sections.findIndex(s=>s.id===id);
-    if (id==='fly'){ e.preventDefault(); window.scrollTo({top:vh()*CFG.sections[0].scroll||vh()*1.35, behavior:'smooth'}); return; }
+    if (id==='fly'){ e.preventDefault(); paceMode='jump'; window.scrollTo({top:vh()*CFG.sections[0].scroll||vh()*1.35, behavior:'smooth'}); return; }
     if (idx<0) return;
     e.preventDefault();
+    paceMode = 'jump';
     let acc=0;
     for (const s of segs){
       if (s.kind==='dive' && s.i===idx) break;
