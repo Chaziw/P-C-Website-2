@@ -30,7 +30,7 @@
   /* ── fixed viewport stage ── */
   #stage{position:fixed;inset:0;overflow:hidden;background:#241a10}
   #stage .layer{position:absolute;inset:0}
-  #stage video,#stage img.still{
+  #stage video,#stage img.still,#stage canvas.scrub{
     position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
     min-width:100%;min-height:100%;width:auto;height:auto;object-fit:cover;
     width:100%;height:100%;
@@ -242,6 +242,9 @@ const CFG = {
   const layers = [];   // one per segment, same order
   const H264 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.640028"') !== '';
   const mediaSrc = s => H264 ? s : s.replace(/\.mp4$/, '.webm');
+  /* WebCodecs canvas engine: draw the exact frame every rAF — no media-element
+     seek/play pipeline at all. Falls back per-clip to <video> on any failure. */
+  const CAN_SCRUB = !stillsMode && typeof window.VideoDecoder === 'function';
   function mkVideo(src, poster){
     const v = document.createElement('video');
     v.muted = true; v.playsInline = true; v.preload = 'auto';
@@ -253,23 +256,28 @@ const CFG = {
   segs.forEach((seg) => {
     const wrap = document.createElement('div');
     wrap.className = 'layer';
-    let v = null, img = null;
-    if (!stillsMode){
-      const src = mediaSrc(seg.kind==='dive' ? CFG.sections[seg.i].clip : CFG.connectors[seg.i].clip);
+    const clip = seg.kind==='dive' ? CFG.sections[seg.i].clip : CFG.connectors[seg.i].clip;
+    let v = null, img = null, cv = null;
+    if (!stillsMode && !CAN_SCRUB){
       const poster = seg.kind==='dive' ? CFG.sections[seg.i].poster : null;
-      v = mkVideo(src, poster);
+      v = mkVideo(mediaSrc(clip), poster);
       v.addEventListener('error', () => { seg.broken = true; ensureStill(seg, wrap); });
       wrap.appendChild(v);
     }
+    if (CAN_SCRUB){
+      cv = document.createElement('canvas');
+      cv.className = 'scrub';
+      wrap.appendChild(cv);
+    }
     if (seg.kind==='dive'){
-      // poster img under the video for instant first paint
+      // poster img under the video/canvas for instant first paint
       img = document.createElement('img');
       img.className = 'still'; img.alt = '';
       img.src = CFG.sections[seg.i].poster || CFG.sections[seg.i].still;
       wrap.insertBefore(img, wrap.firstChild);
     }
     stage.appendChild(wrap);
-    layers.push({seg, wrap, v, img, ready:false});
+    layers.push({seg, wrap, v, img, cv, clip, scrub:null, ready:false});
   });
   function ensureStill(seg, wrap){
     if (wrap.querySelector('img.still')) return;
@@ -373,21 +381,158 @@ const CFG = {
   prevBtn.addEventListener('click', ()=>goSection(sectionAround(destFrac()).prev));
   nextBtn.addEventListener('click', ()=>goSection(sectionAround(destFrac()).next));
 
-  /* blob-fetch videos so currentTime seeking always works (byte-range safe) */
-  async function blobify(l){
+  /* ── minimal MP4 demuxer: single all-intra H.264 video track, faststart ── */
+  function parseMP4(ab){
+    const dv = new DataView(ab), u8 = new Uint8Array(ab);
+    const rd32 = o => dv.getUint32(o);
+    const rdType = o => String.fromCharCode(u8[o],u8[o+1],u8[o+2],u8[o+3]);
+    function* boxes(start,end){
+      let o = start;
+      while (o+8 <= end){
+        let sz = rd32(o), hdr = 8;
+        const ty = rdType(o+4);
+        if (sz===1){ sz = Number(dv.getBigUint64(o+8)); hdr = 16; }
+        else if (sz===0){ sz = end-o; }
+        if (sz < hdr) break;
+        yield {ty, start:o+hdr, end:o+sz};
+        o += sz;
+      }
+    }
+    const find = (s,e,ty) => { for (const b of boxes(s,e)) if (b.ty===ty) return b; return null; };
+    const moov = find(0, ab.byteLength, 'moov'); if (!moov) throw new Error('no moov');
+    let stbl = null, timescale = 0;
+    for (const trak of boxes(moov.start, moov.end)){
+      if (trak.ty!=='trak') continue;
+      const mdia = find(trak.start, trak.end, 'mdia'); if (!mdia) continue;
+      const hdlr = find(mdia.start, mdia.end, 'hdlr');
+      if (!hdlr || rdType(hdlr.start+8)!=='vide') continue;
+      const mdhd = find(mdia.start, mdia.end, 'mdhd');
+      timescale = u8[mdhd.start]===1 ? rd32(mdhd.start+20) : rd32(mdhd.start+12);
+      const minf = find(mdia.start, mdia.end, 'minf');
+      stbl = find(minf.start, minf.end, 'stbl');
+      break;
+    }
+    if (!stbl) throw new Error('no video track');
+    const stsd = find(stbl.start, stbl.end, 'stsd');
+    const entry = [...boxes(stsd.start+8, stsd.end)][0];      // avc1 sample entry
+    let avcC = null;
+    for (const c of boxes(entry.start+78, entry.end)) if (c.ty==='avcC'){ avcC = c; break; }
+    if (!avcC) throw new Error('no avcC');
+    const desc = u8.slice(avcC.start, avcC.end);
+    const codec = 'avc1.'+[u8[avcC.start+1],u8[avcC.start+2],u8[avcC.start+3]]
+      .map(x=>x.toString(16).padStart(2,'0')).join('');
+    const stts = find(stbl.start, stbl.end, 'stts');
+    const fps = timescale / rd32(stts.start+12);
+    const stsz = find(stbl.start, stbl.end, 'stsz');
+    const szDefault = rd32(stsz.start+4), n = rd32(stsz.start+8);
+    const sizes = new Array(n);
+    for (let i=0;i<n;i++) sizes[i] = szDefault || rd32(stsz.start+12+4*i);
+    const stco = find(stbl.start, stbl.end, 'stco') || find(stbl.start, stbl.end, 'co64');
+    const co64 = stco.ty==='co64', nCh = rd32(stco.start+4);
+    const chOff = i => co64 ? Number(dv.getBigUint64(stco.start+8+8*i)) : rd32(stco.start+8+4*i);
+    const stsc = find(stbl.start, stbl.end, 'stsc');
+    const nSc = rd32(stsc.start+4);
+    const scEnt = [];
+    for (let i=0;i<nSc;i++){
+      const b = stsc.start+8+12*i;
+      scEnt.push({first:rd32(b), per:rd32(b+4)});
+    }
+    const offs = new Array(n);
+    let s = 0;
+    for (let c=0; c<nCh && s<n; c++){
+      let per = scEnt[0].per;
+      for (const eSc of scEnt) if (c+1 >= eSc.first) per = eSc.per;
+      let off = chOff(c);
+      for (let j=0; j<per && s<n; j++, s++){ offs[s] = off; off += sizes[s]; }
+    }
+    return {codec, desc, fps, n, sizes, offs};
+  }
+
+  /* ── per-clip decoder: random-access one frame per request (all-intra) ── */
+  function ClipScrub(parsed, ab, canvas, onFail){
+    const ctx = canvas.getContext('2d');
+    const u8 = new Uint8Array(ab);
+    let dec = null, busy = 0, want = -1, sent = -1, tsc = 0, dead = false;
+    function open(){
+      dec = new VideoDecoder({
+        output: f => {
+          if (canvas.width !== f.codedWidth){ canvas.width = f.codedWidth; canvas.height = f.codedHeight; }
+          ctx.drawImage(f, 0, 0);
+          f.close();
+          scrubProven = true;
+          busy = 0;
+          pump();
+        },
+        error: () => { dead = true; onFail(); }
+      });
+      dec.configure({codec:parsed.codec, description:parsed.desc, optimizeForLatency:true});
+    }
+    function pump(){
+      if (dead || busy || want < 0 || want === sent) return;
+      try{
+        if (!dec || dec.state === 'closed') open();
+        sent = want; busy = 1;
+        dec.decode(new EncodedVideoChunk({
+          type:'key', timestamp: tsc++ * 16700,
+          data: u8.subarray(parsed.offs[sent], parsed.offs[sent]+parsed.sizes[sent])
+        }));
+        dec.flush().catch(()=>{});
+      }catch(e){ dead = true; busy = 0; onFail(); }
+    }
+    return {
+      n: parsed.n,
+      show(i){
+        i = Math.max(0, Math.min(parsed.n-1, i));
+        if (i !== want){ want = i; pump(); }
+      },
+      close(){
+        if (dec && dec.state !== 'closed'){ try{ dec.close(); }catch(e){} }
+        dec = null; sent = -1; busy = 0;
+      }
+    };
+  }
+
+  /* clip loading: scrub mode fetches + demuxes; video mode blob-fetches.
+     Any scrub failure falls back to the <video> play engine for that clip;
+     if the decoder never produced a frame the failure is fundamental, so
+     every clip falls back at once instead of hiccuping scene by scene. */
+  let scrubProven = false;
+  function scrubFailed(l){
+    if (scrubProven) fallbackVideo(l);
+    else layers.forEach(fallbackVideo);
+  }
+  function fallbackVideo(l){
+    if (l.v || stillsMode) return;
+    l.scrub = null;
+    if (l.cv) l.cv.style.display = 'none';
+    const poster = l.seg.kind==='dive' ? CFG.sections[l.seg.i].poster : null;
+    l.v = mkVideo(mediaSrc(l.clip), poster);
+    l.v.addEventListener('error', () => { l.seg.broken = true; ensureStill(l.seg, l.wrap); });
+    l.wrap.appendChild(l.v);
+  }
+  async function loadClip(l){
+    if (l.loading) return; l.loading = true;
+    if (CAN_SCRUB && !l.v){
+      try{
+        const r = await fetch(l.clip);
+        if (!r.ok) throw 0;
+        const ab = await r.arrayBuffer();
+        if (!l.v) l.scrub = ClipScrub(parseMP4(ab), ab, l.cv, ()=>scrubFailed(l));
+      }catch(e){ fallbackVideo(l); }
+      return;
+    }
     if (!l.v || l.blobbed) return;
     try{
-      const r = await fetch(l.v.src.startsWith('blob:')?l.origSrc:l.v.src);
+      const r = await fetch(l.v.src);
       if (!r.ok) throw 0;
       const b = await r.blob();
-      l.origSrc = l.v.src;
       l.v.src = URL.createObjectURL(b);
       l.blobbed = true;
     }catch(e){ /* keep direct src */ }
   }
-  /* progressive warm-up: first two segments immediately, rest on idle */
-  layers.slice(0,3).forEach(blobify);
-  const warmRest = () => layers.forEach(blobify);
+  /* progressive warm-up: first segments immediately, rest on idle */
+  layers.slice(0,3).forEach(loadClip);
+  const warmRest = () => layers.forEach(loadClip);
   if (window.requestIdleCallback) requestIdleCallback(warmRest, {timeout:2500});
   else setTimeout(warmRest, 1200);
 
@@ -445,17 +590,22 @@ const CFG = {
         L.wrap.classList.toggle('active', idx===k);
         L.wrap.style.zIndex = idx===k ? 2 : 1;
         if (idx!==k && L.v && !L.v.paused) L.v.pause();
+        /* hardware decoder sessions are scarce — keep only neighbours open */
+        if (L.scrub && Math.abs(idx-k) > 1) L.scrub.close();
       });
       /* crossfade neighbours near seams handled below */
       lastSeg = k;
     }
-    /* drive the active video: PLAY forward at a governed rate (native decode
-       pipeline = perfectly even frame cadence); seek only for reverse motion.
-       A proportional controller aims playbackRate to close the gap in ~0.22s. */
-    if (l.v && !l.seg.broken && l.v.duration){
-      const s = seg.kind==='dive' ? CFG.sections[seg.i] : null;
-      const t = seg.kind==='dive' ? remap(local, s.linger) : local;
-      const want = t * Math.max(0, l.v.duration - .05);
+    /* drive the active clip. Preferred: WebCodecs canvas scrub — decode and
+       draw the exact mapped frame each rAF, equally smooth in both directions.
+       Fallback: PLAY the <video> forward at a governed rate (native decode
+       pipeline = even frame cadence); element seeks only for reverse motion. */
+    const sAct = seg.kind==='dive' ? CFG.sections[seg.i] : null;
+    const tAct = seg.kind==='dive' ? remap(local, sAct.linger) : local;
+    if (l.scrub){
+      l.scrub.show(Math.round(tAct * (l.scrub.n - 1)));
+    } else if (l.v && !l.seg.broken && l.v.duration){
+      const want = tAct * Math.max(0, l.v.duration - .05);
       const cur = l.v.currentTime || 0;
       const err = want - cur;
       if (err > 0.02){
@@ -485,6 +635,7 @@ const CFG = {
         next.wrap.classList.add('active');
         next.wrap.style.zIndex = 3;
         next.wrap.style.opacity = f;
+        if (next.scrub) next.scrub.show(0);   // paint the incoming clip's first frame
       }
     } else if (layers[k+1] && layers[k+1].wrap.style.opacity){
       layers[k+1].wrap.style.opacity='';
