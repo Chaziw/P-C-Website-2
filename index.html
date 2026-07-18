@@ -41,7 +41,7 @@
   /* ── copy overlays ── */
   .copy{
     position:fixed;left:0;right:0;bottom:0;z-index:5;
-    padding:0 clamp(20px,6vw,72px) calc(clamp(40px,7vh,84px) + env(safe-area-inset-bottom));
+    padding:0 clamp(20px,6vw,72px) calc(clamp(64px,9vh,96px) + env(safe-area-inset-bottom));
     max-width:720px;opacity:0;transform:translateY(18px);pointer-events:none;
     transition:opacity .45s var(--ease-soft),transform .45s var(--ease-soft);
   }
@@ -80,6 +80,19 @@
   .btn-ghost{color:var(--gold-glow);border:1px solid rgba(235,206,134,.55)}
   .btn-ghost:hover{background:rgba(235,206,134,.12)}
   .smallnote{font-family:'Nunito Sans',sans-serif;font-size:12px;color:#D8C9AC;margin-top:10px}
+
+  /* scene next/prev buttons */
+  #nav{position:fixed;right:calc(14px + env(safe-area-inset-right));
+    bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;display:flex;gap:10px}
+  #nav button{width:42px;height:42px;border-radius:50%;cursor:pointer;
+    border:1px solid rgba(235,206,134,.55);background:rgba(58,44,30,.45);
+    color:var(--gold-glow);font-size:14px;line-height:1;padding:0;
+    -webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+    font-family:'Nunito Sans',sans-serif;
+    transition:background .2s,transform .15s var(--ease-soft),opacity .3s}
+  #nav button:hover{background:rgba(235,206,134,.18);transform:translateY(-2px)}
+  #nav button:active{transform:translateY(0) scale(.96)}
+  #nav button[disabled]{opacity:.25;pointer-events:none}
 
   /* scroll hint */
   #hint{position:fixed;left:50%;transform:translateX(-50%);
@@ -148,6 +161,10 @@
 
 <div id="stage" aria-hidden="true"></div>
 <div id="hint"><span>Scroll to fly</span><span class="chev">𝄢</span></div>
+<div id="nav">
+  <button type="button" id="prevBtn" aria-label="Previous scene" title="Previous scene">▲</button>
+  <button type="button" id="nextBtn" aria-label="Next scene" title="Next scene">▼</button>
+</div>
 <div id="rail" role="slider" tabindex="0" aria-label="Journey progress" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
 <div id="runway"></div>
 <div id="copyroot"></div>
@@ -321,21 +338,40 @@ const CFG = {
   });
   ['pointerup','pointercancel'].forEach(ev=>
     rail.addEventListener(ev, ()=>rail.classList.remove('dragging')));
+  /* scene stepping: destination-based, so repeated presses queue up cleanly */
+  const destFrac = () => Math.min(totalSpan, (window.scrollY||0)/vh())/totalSpan;
+  function sectionAround(p){
+    /* p is a fraction of the timeline; step relative to the containing segment:
+       inside dive i → prev scene is i-1, next is i+1;
+       inside connector i (between dives i and i+1) → prev is i, next is i+1 */
+    const {k} = segFor(p*totalSpan);
+    const seg = segs[k];
+    const prev = seg.kind==='dive' ? seg.i-1 : seg.i;
+    const next = seg.i+1 < sectionFrac.length ? seg.i+1 : -1;
+    return {prev, next};
+  }
+  function goSection(i, pace){
+    if (i < 0 || i >= sectionFrac.length) return;
+    paceMode = pace || 'scroll';
+    prime();
+    window.scrollTo({top: sectionFrac[i]*totalSpan*vh(), behavior:'auto'});
+  }
   rail.addEventListener('keydown', e=>{
-    const p = Math.min(totalSpan, (window.scrollY||0)/vh())/totalSpan;
-    /* nearest section, then step */
-    let cur = 0;
-    sectionFrac.forEach((f,i)=>{ if (Math.abs(f-p) < Math.abs(sectionFrac[cur]-p)) cur = i; });
+    const {prev, next} = sectionAround(destFrac());
     let go = null;
-    if (e.key==='ArrowDown'||e.key==='ArrowRight'||e.key==='PageDown') go = Math.min(sectionFrac.length-1, cur+1);
-    else if (e.key==='ArrowUp'||e.key==='ArrowLeft'||e.key==='PageUp') go = Math.max(0, cur-1);
+    if (e.key==='ArrowDown'||e.key==='ArrowRight'||e.key==='PageDown') go = next;
+    else if (e.key==='ArrowUp'||e.key==='ArrowLeft'||e.key==='PageUp') go = prev;
     else if (e.key==='Home') go = 0;
     else if (e.key==='End') go = sectionFrac.length-1;
     if (go===null) return;
     e.preventDefault();
-    paceMode = 'jump';
-    window.scrollTo({top: sectionFrac[go]*totalSpan*vh(), behavior:'smooth'});
+    goSection(go, 'jump');
   });
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  /* next/prev fly at the film's own governed pace — the intended way to watch */
+  prevBtn.addEventListener('click', ()=>goSection(sectionAround(destFrac()).prev));
+  nextBtn.addEventListener('click', ()=>goSection(sectionAround(destFrac()).next));
 
   /* blob-fetch videos so currentTime seeking always works (byte-range safe) */
   async function blobify(l){
@@ -369,9 +405,9 @@ const CFG = {
      toward it at a capped pace so scenes always play out as intended,
      no matter how hard the visitor flicks the wheel. Deliberate jumps
      (rail drag/click, chapter links) get a faster but still smooth pace. */
-  const PACE = { scroll: 0.9, jump: 2.4 };   // timeline units (viewport-heights) per second
+  const PACE = { scroll: 0.7, jump: 2.4 };   // timeline units (viewport-heights) per second
   let paceMode = 'scroll';
-  let shownCopy = -1, lastSeg = -1, lastTick = 0, lastAria = -1;
+  let shownCopy = -1, lastSeg = -1, lastTick = 0, lastAria = -1, lastNavState = '';
   let smoothP = Math.min(totalSpan, (window.scrollY||0)/vh());   // start where the browser restored us
   function segFor(progress){
     let acc = 0;
@@ -408,21 +444,34 @@ const CFG = {
       layers.forEach((L,idx)=>{
         L.wrap.classList.toggle('active', idx===k);
         L.wrap.style.zIndex = idx===k ? 2 : 1;
+        if (idx!==k && L.v && !L.v.paused) L.v.pause();
       });
       /* crossfade neighbours near seams handled below */
       lastSeg = k;
     }
-    /* seek */
+    /* drive the active video: PLAY forward at a governed rate (native decode
+       pipeline = perfectly even frame cadence); seek only for reverse motion.
+       A proportional controller aims playbackRate to close the gap in ~0.22s. */
     if (l.v && !l.seg.broken && l.v.duration){
       const s = seg.kind==='dive' ? CFG.sections[seg.i] : null;
       const t = seg.kind==='dive' ? remap(local, s.linger) : local;
       const want = t * Math.max(0, l.v.duration - .05);
-      /* never queue a seek behind an unfinished one — that's what stalls scrubbing */
-      if (!l.v.seeking && Math.abs((l.v.currentTime||0) - want) > 0.02){
-        try{
-          if (l.v.fastSeek) l.v.fastSeek(want); /* frame-accurate: clips are all-intra */
-          else l.v.currentTime = want;
-        }catch(e){ try{ l.v.currentTime = want; }catch(_){} }
+      const cur = l.v.currentTime || 0;
+      const err = want - cur;
+      if (err > 0.02){
+        const rate = Math.min(3.2, Math.max(0.35, err/0.22));
+        if (Math.abs((l.v.playbackRate||1) - rate) > 0.05) l.v.playbackRate = rate;
+        if (l.v.paused){ const p = l.v.play(); if (p && p.catch) p.catch(()=>{}); }
+      } else if (err < -0.08){
+        if (!l.v.paused) l.v.pause();
+        if (!l.v.seeking){
+          try{
+            if (l.v.fastSeek) l.v.fastSeek(want); /* frame-accurate: clips are all-intra */
+            else l.v.currentTime = want;
+          }catch(e){ try{ l.v.currentTime = want; }catch(_){} }
+        }
+      } else if (!l.v.paused){
+        l.v.pause();
       }
     }
     /* crossfade across seams */
@@ -464,6 +513,14 @@ const CFG = {
     railGoal.style.opacity = Math.abs(gap) > .15 ? 1 : 0;
     const ariaNow = Math.round(pct);
     if (ariaNow !== lastAria){ rail.setAttribute('aria-valuenow', ariaNow); lastAria = ariaNow; }
+    /* enable/disable scene buttons at the ends of the journey */
+    const na = sectionAround(target/totalSpan);
+    const navState = (na.prev >= 0 ? 'p':'') + (na.next >= 0 ? 'n':'');
+    if (navState !== lastNavState){
+      prevBtn.disabled = navState.indexOf('p') < 0;
+      nextBtn.disabled = navState.indexOf('n') < 0;
+      lastNavState = navState;
+    }
     hint.classList.toggle('gone', (window.scrollY||0) > vh()*.3);
     requestAnimationFrame(frame);
   }
