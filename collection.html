@@ -457,8 +457,10 @@ const BOOKS = [
   });
   stagewrap.addEventListener('pointermove', e=>{
     if (dragY===null) return;
-    /* swipe down = next book (deeper into the shelf) */
+    /* swipe down = next book; one book per gesture, however long the flick —
+       a vigorous phone swipe would otherwise sail two books ahead */
     target = dragStart + (e.clientY - dragY)/260;
+    target = Math.max(dragStart - 1, Math.min(dragStart + 1, target));
     lastInput = performance.now();
   });
   ['pointerup','pointercancel'].forEach(ev=>stagewrap.addEventListener(ev, ()=>{ dragY = null; }));
