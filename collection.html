@@ -109,11 +109,8 @@
   .face-front .theme{font-family:'Nunito Sans',sans-serif;font-size:10.5px;font-weight:700;
     letter-spacing:.08em;text-transform:uppercase;color:#D8C9AC;margin-top:5px}
 
-  /* gallery window */
-  .gal{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden;
-    border:1px solid rgba(235,206,134,.35);
-    background:radial-gradient(120% 120% at 50% 30%,#3a2c1e,#241a10);
-    box-shadow:inset 0 0 30px rgba(0,0,0,.45)}
+  /* gallery window — frameless: art floats on the card itself */
+  .gal{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden}
   .gal img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
     opacity:0;transition:opacity .45s var(--ease-soft)}
   .gal img.show{opacity:1}
@@ -138,19 +135,28 @@
   .bookcard.focus .gal .arrow{opacity:1}
   /* only the visible face's controls are clickable */
   .bookcard.focus:not(.flipped) .face-front .arrow,
-  .bookcard.focus:not(.flipped) .face-front .flipbtn{pointer-events:auto}
-  .bookcard.focus.flipped .face-back .flipbtn,
-  .bookcard.focus.flipped .face-back .btn{pointer-events:auto}
+  .bookcard.focus:not(.flipped) .face-front .flipbtn,
+  .bookcard.focus:not(.flipped) .face-front .buybtn{pointer-events:auto}
+  .bookcard.focus.flipped .face-back .flipbtn{pointer-events:auto}
+  .caption{font-family:'Newsreader',serif;font-style:italic;text-align:center;
+    font-size:clamp(12.5px,1.8vh,15px);line-height:1.4;color:#E8DCC0;margin-top:8px;
+    text-wrap:balance}
   .galdots{display:flex;gap:5px;justify-content:center;align-items:center;margin-top:9px;height:8px}
   .galdots i{width:5px;height:5px;border-radius:50%;background:rgba(235,206,134,.3);transition:background .3s,transform .3s}
   .galdots i.on{background:var(--gold-glow);transform:scale(1.4)}
 
   .face-front .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  .face-front .foot .btns{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
   .flipbtn{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:10.5px;letter-spacing:.08em;
     text-transform:uppercase;cursor:pointer;white-space:nowrap;
     color:var(--gold-glow);background:transparent;border:1px solid rgba(235,206,134,.5);
     padding:8px 14px;border-radius:999px;transition:background .2s}
   .flipbtn:hover{background:rgba(235,206,134,.14)}
+  .buybtn{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;cursor:pointer;white-space:nowrap;text-decoration:none;
+    color:#FFF6E8;background:var(--rust-500);border:1px solid transparent;
+    padding:8px 16px;border-radius:999px;transition:background .2s,transform .15s var(--ease-soft)}
+  .buybtn:hover{background:var(--rust-600);transform:translateY(-1px)}
 
   /* back face layout */
   .face-back .inner{justify-content:flex-start;gap:8px}
@@ -220,6 +226,8 @@ const BOOKS = [
   {
     id:'moors', num:'Book One', title:'The Clockwork Moors', theme:'Pulse & beat',
     quote:'The bridge only holds for those who keep the beat.',
+    line:'Inside: windmills, brass beetles, and the bridge that keeps the beat.',
+    buy:null,   /* Amazon KDP link goes here when ready */
     body:'Every mill and machine of the Moors once moved to one shared beat — until the great Pendulum fell still, and nothing would fit together again.',
     tags:['Pulse & beat','ABRSM Grade 1'],
     art:['assets/books/moors-01.jpg','assets/books/moors-02.jpg','assets/books/moors-03.jpg',
@@ -230,6 +238,8 @@ const BOOKS = [
   {
     id:'islands', num:'Book Two', title:'The Stave Islands', theme:'The stave & note names',
     quote:'Five islands, and every one had forgotten its name.',
+    line:'Inside: postal gulls, singing stones, and the lighthouse that forgot.',
+    buy:null,   /* Amazon KDP link goes here when ready */
     body:'Five islands rest in a bright sea, each with its own name and voice — but the Treble Clef Lighthouse has gone dark, and no one recalls who lives where.',
     tags:['The stave & note names','ABRSM Grade 1'],
     art:['assets/books/islands-01.jpg','assets/books/islands-02.jpg','assets/books/islands-03.jpg',
@@ -240,6 +250,8 @@ const BOOKS = [
   {
     id:'caldera', num:'Book Three', title:'The Drum Caldera', theme:'Note & rest values',
     quote:'Even a silence can be a word.',
+    line:'Inside: drum-stone valleys and the silence between the beats.',
+    buy:null,   /* Amazon KDP link goes here when ready */
     body:'In a drumming volcanic crater the Calderans speak in sounds long and short — and in the held breaths between them. Then the longest and shortest sounds were stolen, and the meaning fell apart.',
     tags:['Note & rest values','ABRSM Grade 1'],
     art:['assets/books/caldera-01.jpg', null, null]   // null = placeholder slide
@@ -299,9 +311,12 @@ const BOOKS = [
             `<button class="arrow l" aria-label="Previous artwork">‹</button>`+
             `<button class="arrow r" aria-label="Next artwork">›</button>`+
           `</div>`+
+          `<div class="caption">${b.line}</div>`+
           `<div class="galdots">${b.art.map(()=>'<i></i>').join('')}</div>`+
           `<div class="foot"><div><h2>${b.title}</h2><div class="theme">${b.theme}</div></div>`+
-          `<button class="flipbtn" aria-label="About this book">About ↻</button></div>`+
+          `<div class="btns">`+
+          `<a class="buybtn" href="${b.buy || 'mailto:hello@pipandclef.co.uk?subject=Pre-order%20'+encodeURIComponent(b.title)}">Buy now</a>`+
+          `<button class="flipbtn" aria-label="About this book">About ↻</button></div></div>`+
           `</div>`;
       } else {
         s.innerHTML =
@@ -311,8 +326,7 @@ const BOOKS = [
           `<div class="quote">“${b.quote}”</div>`+
           `<p>${b.body}</p>`+
           `<div class="tags">${b.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`+
-          `<div class="foot">`+
-          `<a class="btn btn-primary" href="mailto:hello@pipandclef.co.uk?subject=Pre-order%20${encodeURIComponent(b.title)}">Pre-order</a>`+
+          `<div class="foot" style="justify-content:flex-end">`+
           `<button class="flipbtn" aria-label="Back to the cover">Cover ↻</button></div>`+
           `</div>`;
       }
@@ -343,7 +357,7 @@ const BOOKS = [
     c.el.querySelectorAll('.flipbtn').forEach(btn =>
       btn.addEventListener('click', e=>{ e.stopPropagation(); userTouch(); c.flipT = c.flipT ? 0 : 180; }));
     ['pointerdown','wheel'].forEach(ev =>
-      c.el.querySelectorAll('.arrow,.flipbtn,.btn').forEach(b =>
+      c.el.querySelectorAll('.arrow,.flipbtn,.buybtn').forEach(b =>
         b.addEventListener(ev, e=>e.stopPropagation())));
   });
   /* preload neighbours of first images lazily on idle */
@@ -428,8 +442,12 @@ const BOOKS = [
       while (off < -N/2) off += N;
       const a = Math.abs(off), sg = Math.sign(off) || 1;
 
-      if (a > 1.32){ c.el.style.visibility = 'hidden'; return; }
+      if (a > 1.05){ c.el.style.visibility = 'hidden'; return; }
       c.el.style.visibility = 'visible';
+      /* fade rotated-away cards so they never cover the page text:
+         fully present near centre, gone by the time they'd overlap */
+      const ft = Math.min(1, Math.max(0, (a - .4) / .55));
+      c.el.style.opacity = (1 - ft*ft*(3-2*ft)).toFixed(3);
 
       let y, z, rot;
       if (a <= 1){
