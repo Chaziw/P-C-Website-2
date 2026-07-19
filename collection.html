@@ -109,19 +109,27 @@
   .face-front .theme{font-family:'Nunito Sans',sans-serif;font-size:10.5px;font-weight:700;
     letter-spacing:.08em;text-transform:uppercase;color:#D8C9AC;margin-top:5px}
 
-  /* gallery window — frameless: art floats on the card and bleeds into it */
-  .gal{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden}
+  /* gallery window — art floats on the card inside an animated gold outline */
+  .gal{position:relative;flex:1;min-height:0;border-radius:10px}
   .gal .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     opacity:0;transition:opacity .45s var(--ease-soft)}
   .gal .slide.show{opacity:1}
-  .gal .slide img{max-width:100%;max-height:100%;width:auto;height:auto;
-    -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent),
-                       linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);
-    -webkit-mask-composite:source-in;
-    mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent),
-               linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);
-    mask-composite:intersect}
+  .gal .slide img{max-width:calc(100% - 18px);max-height:calc(100% - 18px);
+    width:auto;height:auto;border-radius:6px}
   .gal .slide.ph{flex-direction:column;gap:10px;text-align:center;padding:20px}
+  /* animated outline: a gold thread of light slowly circling the artwork */
+  @property --fa{syntax:'<angle>';inherits:false;initial-value:0deg}
+  .gal .outline{position:absolute;border-radius:11px;pointer-events:none;padding:1.5px;
+    background:conic-gradient(from var(--fa),
+      rgba(235,206,134,.1) 0deg, rgba(235,206,134,.95) 45deg, rgba(192,151,63,.4) 100deg,
+      rgba(235,206,134,.14) 160deg, rgba(235,206,134,.75) 215deg, rgba(192,151,63,.3) 275deg,
+      rgba(235,206,134,.1) 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    filter:drop-shadow(0 0 7px rgba(235,206,134,.28));
+    animation:frameSpin 9s linear infinite}
+  @keyframes frameSpin{to{--fa:360deg}}
+  @media (prefers-reduced-motion:reduce){ .gal .outline{animation:none} }
   .gal .ph .glyph{font-size:44px;color:rgba(235,206,134,.65)}
   .gal .ph .t{font-family:'Newsreader',serif;font-size:17px;color:var(--paper-1)}
   .gal .ph .s{font-family:'Nunito Sans',sans-serif;font-size:11px;letter-spacing:.06em;color:#D8C9AC}
@@ -335,7 +343,7 @@ const BOOKS = [
           `<div class="eyebrow">${b.num} · ${b.theme}</div>`+
           `<div class="gal">`+
             b.art.map((a,ai)=> a
-              ? `<div class="slide"><img data-src="${a}" alt="${b.caps[ai] || b.title+' artwork'}"></div>`
+              ? `<div class="slide"><img data-src="${a}" alt="${b.caps[ai] || b.title+' artwork'}"><div class="outline"></div></div>`
               : `<div class="slide ph"><div class="glyph">𝄢</div><div class="t">Artwork arriving soon</div><div class="s">The Calderans are still drumming…</div></div>`
             ).join('')+
             `<div class="cnt">1 / ${b.art.length}</div>`+
@@ -371,6 +379,21 @@ const BOOKS = [
       gdots:[...el.querySelectorAll('.galdots i')]};
   });
 
+  /* size the outline to hug the displayed artwork (layout metrics only —
+     getBoundingClientRect lies under the card's 3D transform) */
+  function fitOutline(sl){
+    const im = sl.querySelector('img'), o = sl.querySelector('.outline');
+    if (!im || !o || !im.naturalWidth) return;
+    const sw = sl.clientWidth, sh = sl.clientHeight;
+    const s = Math.min((sw-18)/im.naturalWidth, (sh-18)/im.naturalHeight);
+    const w = im.naturalWidth*s, h = im.naturalHeight*s, m = 7;
+    o.style.width  = (w + 2*m).toFixed(1)+'px';
+    o.style.height = (h + 2*m).toFixed(1)+'px';
+    o.style.left = ((sw - w)/2 - m).toFixed(1)+'px';
+    o.style.top  = ((sh - h)/2 - m).toFixed(1)+'px';
+  }
+  addEventListener('resize', ()=>cards.forEach(c=>c.slides.forEach(fitOutline)));
+
   /* gallery behaviour (lazy-load, crossfade, per-image caption) */
   function galShow(c, i){
     const n = c.book.art.length;
@@ -378,7 +401,11 @@ const BOOKS = [
     c.slides.forEach((sl, k)=>{
       if (k === c.gi){
         const im = sl.querySelector('img');
-        if (im && im.dataset.src && !im.src) im.src = im.dataset.src;
+        if (im && im.dataset.src && !im.src){
+          im.src = im.dataset.src;
+          im.addEventListener('load', ()=>fitOutline(sl), {once:true});
+        }
+        fitOutline(sl);
       }
       sl.classList.toggle('show', k === c.gi);
     });
@@ -399,7 +426,10 @@ const BOOKS = [
   /* preload remaining images lazily on idle */
   const warm = ()=>cards.forEach(c=>c.slides.forEach(sl=>{
     const im = sl.querySelector('img');
-    if (im && im.dataset.src && !im.src) im.src = im.dataset.src;
+    if (im && im.dataset.src && !im.src){
+      im.src = im.dataset.src;
+      im.addEventListener('load', ()=>fitOutline(sl), {once:true});
+    }
   }));
   if (window.requestIdleCallback) requestIdleCallback(warm, {timeout:4000}); else setTimeout(warm, 2500);
 
