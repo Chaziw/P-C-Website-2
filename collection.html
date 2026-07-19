@@ -117,6 +117,10 @@
   .gal .slide img{max-width:calc(100% - 18px);max-height:calc(100% - 18px);
     width:auto;height:auto;border-radius:6px}
   .gal .slide.ph{flex-direction:column;gap:10px;text-align:center;padding:20px}
+  /* per-slide ambient animation: fades in over the still, freezes on its last frame */
+  .gal .slide video{position:absolute;object-fit:cover;border-radius:6px;pointer-events:none;
+    opacity:0;transition:opacity .4s var(--ease-soft)}
+  .gal .slide video.on{opacity:1}
   /* animated outline: a gold thread of light slowly circling the artwork */
   @property --fa{syntax:'<angle>';inherits:false;initial-value:0deg}
   .gal .outline{position:absolute;border-radius:11px;pointer-events:none;padding:1.5px;
@@ -390,6 +394,11 @@ const BOOKS = [
     o.style.top    = (im.offsetTop  - m)+'px';
     o.style.width  = (im.offsetWidth  + 2*m)+'px';
     o.style.height = (im.offsetHeight + 2*m)+'px';
+    const v = sl.querySelector('video');
+    if (v){
+      v.style.left = im.offsetLeft+'px'; v.style.top = im.offsetTop+'px';
+      v.style.width = im.offsetWidth+'px'; v.style.height = im.offsetHeight+'px';
+    }
   }
   const fitAll = ()=>cards.forEach(c=>c.slides.forEach(fitOutline));
   addEventListener('resize', fitAll);
@@ -397,6 +406,34 @@ const BOOKS = [
   if (window.ResizeObserver){
     const ro = new ResizeObserver(fitAll);
     cards.forEach(c=>ro.observe(c.el.querySelector('.gal')));
+  }
+
+  /* per-slide ambient animations: play once when the slide appears on the
+     focused card, freeze on the final frame; stills remain underneath and
+     for reduced-motion visitors. Clip URL mirrors the still's filename. */
+  const animSrc = a => a ? a.replace('assets/books/','assets/books/anim/').replace(/\.jpg$/,'.mp4') : null;
+  function stopAnim(sl){
+    const v = sl.querySelector('video');
+    if (v && v.src){ v.classList.remove('on'); v.pause(); v.removeAttribute('src'); v.load(); }
+  }
+  function playAnim(c){
+    if (reduced || !c.el.classList.contains('focus')) return;
+    const sl = c.slides[c.gi], url = animSrc(c.book.art[c.gi]);
+    if (!sl || !url) return;
+    let v = sl.querySelector('video');
+    if (!v){
+      v = document.createElement('video');
+      v.muted = true; v.playsInline = true;
+      v.setAttribute('muted',''); v.setAttribute('playsinline','');
+      v.preload = 'auto';
+      v.addEventListener('error', ()=>{ v.remove(); });
+      v.addEventListener('playing', ()=>v.classList.add('on'));
+      sl.appendChild(v);
+    }
+    if (!v.isConnected) return;   /* removed after a load error */
+    v.src = url;
+    fitOutline(sl);
+    const p = v.play(); if (p && p.catch) p.catch(()=>{});
   }
 
   /* gallery behaviour (lazy-load, crossfade, per-image caption) */
@@ -411,9 +448,12 @@ const BOOKS = [
           im.addEventListener('load', ()=>fitOutline(sl), {once:true});
         }
         fitOutline(sl);
+      } else {
+        stopAnim(sl);
       }
       sl.classList.toggle('show', k === c.gi);
     });
+    playAnim(c);
     c.capEl.textContent = c.book.caps[c.gi] || '';
     c.cnt.textContent = `${c.gi+1} / ${n}`;
     c.gdots.forEach((d,k)=>d.classList.toggle('on', k === c.gi));
@@ -556,6 +596,10 @@ const BOOKS = [
       c.el.classList.toggle('focus', focus);
       c.el.classList.toggle('flipped', c.flip > 90);
       c.el.style.pointerEvents = focus ? 'auto' : 'none';
+      /* start the arriving book's slide animation; rest departing books */
+      if (focus && !c.wasFocus) playAnim(c);
+      else if (!focus && c.wasFocus) c.slides.forEach(stopAnim);
+      c.wasFocus = focus;
     });
 
     const curIdx = mod(Math.round(prog), N);
