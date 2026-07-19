@@ -81,6 +81,27 @@
   .btn-ghost:hover{background:rgba(235,206,134,.12)}
   .smallnote{font-family:'Nunito Sans',sans-serif;font-size:12px;color:#D8C9AC;margin-top:10px}
 
+  /* fixed site header / breadcrumb */
+  #site-head{position:fixed;top:0;left:0;right:0;z-index:8;
+    display:flex;align-items:center;gap:18px;
+    padding:calc(10px + env(safe-area-inset-top)) clamp(16px,4vw,40px) 10px;
+    background:linear-gradient(to bottom,rgba(26,18,10,.6),rgba(26,18,10,.18) 75%,transparent);
+    pointer-events:none}
+  #site-head a{pointer-events:auto}
+  #site-head .brand{font-family:'Newsreader',serif;font-weight:600;font-size:19px;
+    color:var(--paper-0);text-decoration:none;white-space:nowrap}
+  #site-head .brand .g{color:var(--gold-glow);margin-right:6px}
+  #site-head nav{margin-left:auto;display:flex;align-items:center;gap:clamp(10px,2.5vw,26px)}
+  #site-head nav a{font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:12px;
+    letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+    color:rgba(251,246,234,.75);transition:color .2s}
+  #site-head nav a:hover{color:var(--paper-0)}
+  #site-head nav a.on{color:var(--gold-glow)}
+  #site-head nav a.cta{padding:8px 16px;border-radius:999px;background:var(--rust-500);
+    color:#FFF6E8;transition:background .2s}
+  #site-head nav a.cta:hover{background:var(--rust-600)}
+  @media (max-width:560px){ #site-head nav a.plain{display:none} }
+
   /* scene next/prev buttons */
   #nav{position:fixed;right:calc(14px + env(safe-area-inset-right));
     bottom:calc(14px + env(safe-area-inset-bottom));z-index:7;display:flex;gap:10px}
@@ -159,6 +180,15 @@
   <a href="#preorder">Pre-order Collection One</a>
 </div>
 
+<header id="site-head">
+  <a class="brand" href="index.html"><span class="g">𝄞</span>Pip &amp; Clef</a>
+  <nav aria-label="Site">
+    <a class="plain on" href="index.html">The Worlds</a>
+    <a class="plain" href="collection.html">Collection One</a>
+    <a class="cta" href="collection.html">Pre-order</a>
+  </nav>
+</header>
+
 <div id="stage" aria-hidden="true"></div>
 <div id="hint"><span>Scroll to fly</span><span class="chev">𝄢</span></div>
 <div id="nav">
@@ -183,7 +213,7 @@ const CFG = {
       linger:.5, eyebrow:'PIP & CLEF', h:'There is a world hidden between the notes.', hero:true,
       body:'In the spaces music leaves behind lies the Resonance — a living world held together by one Great Score. Its pages are lost, and two friends must bring them home.',
       tags:['Illustrated adventures','Ages 5–11','ABRSM Prep–Grade 1'],
-      ctas:[{label:'Get the books',href:'#preorder',primary:true},{label:'Explore the worlds ↓',href:'#fly'}] },
+      ctas:[{label:'Get the books',href:'collection.html',primary:true},{label:'Explore the worlds ↓',href:'#fly'}] },
     { id:'study', clip:'media/dive-02.mp4', poster:'media/poster-02.jpg', still:'media/still-02.jpg',
       linger:.55, eyebrow:'WHERE EVERY ADVENTURE BEGINS', h:'It starts with a torn page and a tuning fork.',
       body:'Deep in a hollow hill, Professor Crotchet sits in his study with the two friends listening closely. He explains that something in the Resonance has gone wrong. “That,” he says, “you will have to discover for yourselves.” Then he strikes the tuning fork.',

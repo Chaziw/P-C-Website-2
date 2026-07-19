@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Collection One — Pip &amp; Clef</title>
+<meta name="description" content="First Notes · Collection One — the first three Pip & Clef adventures: The Clockwork Moors, The Stave Islands and The Drum Caldera. Illustrated music-theory stories for ages 5–11.">
+<meta property="og:title" content="Collection One — Pip & Clef">
+<meta property="og:description" content="Three worlds. Three pages carried home. The first three illustrated adventures.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="assets/books/moors-01.jpg">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='0.9em' font-size='90'%3E%F0%9D%84%9E%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=Lora:ital,wght@0,400..700;1,400..600&family=Nunito+Sans:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper-0:#FBF6EA; --paper-1:#F6EEDC; --ink-900:#3A2C1E; --ink-700:#5A4632;
+    --rust-500:#BE5A2E; --rust-600:#A84E26; --brass-500:#C0973F; --gold-glow:#EBCE86;
+    --bg:#241a10;
+    --ease-soft:cubic-bezier(.33,0,.2,1);
+    --shadow-md:0 10px 30px rgba(58,44,30,.28);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--paper-0);font-family:'Lora',Georgia,serif;
+       -webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100svh}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 90% at 50% 0%,rgba(235,206,134,.07),transparent 55%),
+               radial-gradient(100% 80% at 50% 110%,rgba(0,0,0,.5),transparent 60%)}
+
+  /* ── fixed site header / breadcrumb ── */
+  #site-head{position:fixed;top:0;left:0;right:0;z-index:40;
+    display:flex;align-items:center;gap:18px;
+    padding:calc(10px + env(safe-area-inset-top)) clamp(16px,4vw,40px) 10px;
+    background:rgba(26,18,10,.72);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-bottom:1px solid rgba(235,206,134,.16)}
+  #site-head .crumbs{display:flex;align-items:center;gap:10px;min-width:0}
+  #site-head .brand{font-family:'Newsreader',serif;font-weight:600;font-size:19px;
+    color:var(--paper-0);text-decoration:none;white-space:nowrap}
+  #site-head .brand .g{color:var(--gold-glow);margin-right:6px}
+  #site-head .crumbs .sep{color:rgba(235,206,134,.5);font-size:13px}
+  #site-head .crumbs .here{font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:11px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--gold-glow);white-space:nowrap}
+  #site-head nav{margin-left:auto;display:flex;align-items:center;gap:clamp(10px,2.5vw,26px)}
+  #site-head nav a{font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:12px;
+    letter-spacing:.1em;text-transform:uppercase;text-decoration:none;
+    color:rgba(251,246,234,.75);transition:color .2s}
+  #site-head nav a:hover{color:var(--paper-0)}
+  #site-head nav a.on{color:var(--gold-glow)}
+  #site-head nav a.cta{padding:8px 16px;border-radius:999px;background:var(--rust-500);
+    color:#FFF6E8;transition:background .2s}
+  #site-head nav a.cta:hover{background:var(--rust-600)}
+  @media (max-width:560px){ #site-head nav a.plain{display:none} }
+
+  /* ── page layout ── */
+  #wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;
+    padding:calc(84px + env(safe-area-inset-top)) clamp(18px,4vw,44px) 40px;
+    display:grid;grid-template-columns:minmax(300px,430px) 1fr;
+    gap:clamp(24px,4vw,64px);align-items:center;
+    min-height:100svh}
+  @media (max-width:900px){
+    #wrap{grid-template-columns:1fr;gap:8px;align-items:start;padding-top:calc(76px + env(safe-area-inset-top))}
+  }
+  #intro .eyebrow{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:11px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--gold-glow);margin-bottom:12px}
+  #intro h1{font-family:'Newsreader',serif;font-weight:600;line-height:1.1;
+    font-size:clamp(30px,4.6vw,50px);margin-bottom:14px;text-wrap:balance}
+  #intro p{font-size:clamp(15px,1.7vw,17px);line-height:1.65;color:#F3E9D5;max-width:52ch;margin-bottom:10px}
+  #intro .hintline{font-family:'Nunito Sans',sans-serif;font-size:12px;color:#D8C9AC;margin-top:14px}
+  #intro .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;align-items:center}
+  .btn{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:.02em;
+    display:inline-block;padding:13px 24px;border-radius:999px;text-decoration:none;
+    transition:transform .15s var(--ease-soft),background .15s var(--ease-soft)}
+  .btn-primary{background:var(--rust-500);color:#FFF6E8;box-shadow:var(--shadow-md)}
+  .btn-primary:hover{background:var(--rust-600);transform:translateY(-2px)}
+  .btn-ghost{color:var(--gold-glow);border:1px solid rgba(235,206,134,.55)}
+  .btn-ghost:hover{background:rgba(235,206,134,.12)}
+
+  /* ── carousel stage ── */
+  #stagewrap{position:relative;height:min(78svh,760px);min-height:480px;
+    display:flex;align-items:center;justify-content:center;touch-action:none}
+  @media (max-width:900px){ #stagewrap{height:min(72svh,680px)} }
+  #persp{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    perspective:1300px}
+  #space{position:absolute;transform-style:preserve-3d}
+
+  .bookcard{position:absolute;inset:0;transform-style:preserve-3d;visibility:hidden}
+  .bookcard .slice{position:absolute;inset:0;border-radius:8px 16px 16px 8px;overflow:hidden;pointer-events:none}
+  .bookcard .mid{background:linear-gradient(90deg,#4a3823 0 7%,#EFE6D2 7% 96%,#D9CBAA 96%);
+    border:1px solid rgba(58,44,30,.6)}
+  .face{background:var(--bg);border:1px solid rgba(235,206,134,.3);
+    backface-visibility:hidden;
+    box-shadow:inset 0 1px 1px rgba(255,255,255,.12), inset 0 0 60px rgba(0,0,0,.25)}
+  .face-front{background:
+    linear-gradient(160deg,rgba(235,206,134,.12),rgba(235,206,134,0) 45%),
+    linear-gradient(#2e2214,#241a10)}
+  .face-back{background:linear-gradient(200deg,rgba(235,206,134,.10),rgba(235,206,134,0) 45%),
+    linear-gradient(#2e2214,#221809)}
+
+  /* front face layout */
+  .face-front .inner,.face-back .inner{position:absolute;inset:0;display:flex;flex-direction:column;
+    padding:clamp(12px,2.2vh,20px) clamp(14px,2.2vh,20px)}
+  .face .eyebrow{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:10px;
+    letter-spacing:.17em;text-transform:uppercase;color:var(--gold-glow);margin-bottom:8px;white-space:nowrap}
+  .face-front h2{font-family:'Newsreader',serif;font-weight:600;font-size:clamp(19px,2.6vh,25px);
+    line-height:1.15;margin-top:10px;text-wrap:balance}
+  .face-front .theme{font-family:'Nunito Sans',sans-serif;font-size:10.5px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;color:#D8C9AC;margin-top:5px}
+
+  /* gallery window */
+  .gal{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden;
+    border:1px solid rgba(235,206,134,.35);
+    background:radial-gradient(120% 120% at 50% 30%,#3a2c1e,#241a10);
+    box-shadow:inset 0 0 30px rgba(0,0,0,.45)}
+  .gal img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+    opacity:0;transition:opacity .45s var(--ease-soft)}
+  .gal img.show{opacity:1}
+  .gal .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:10px;text-align:center;padding:20px;opacity:0;transition:opacity .45s var(--ease-soft)}
+  .gal .ph.show{opacity:1}
+  .gal .ph .glyph{font-size:44px;color:rgba(235,206,134,.65)}
+  .gal .ph .t{font-family:'Newsreader',serif;font-size:17px;color:var(--paper-1)}
+  .gal .ph .s{font-family:'Nunito Sans',sans-serif;font-size:11px;letter-spacing:.06em;color:#D8C9AC}
+  .gal .cnt{position:absolute;right:8px;top:8px;z-index:3;
+    font-family:'Nunito Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.08em;
+    color:var(--gold-glow);background:rgba(36,24,12,.65);padding:3px 9px;border-radius:999px;
+    border:1px solid rgba(235,206,134,.3)}
+  .gal .arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;
+    width:34px;height:34px;border-radius:50%;cursor:pointer;
+    border:1px solid rgba(235,206,134,.5);background:rgba(36,24,12,.55);color:var(--gold-glow);
+    font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;
+    -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+    transition:background .2s,opacity .3s;opacity:0}
+  .gal .arrow:hover{background:rgba(235,206,134,.2)}
+  .gal .arrow.l{left:8px}.gal .arrow.r{right:8px}
+  .bookcard.focus .gal .arrow{opacity:1}
+  /* only the visible face's controls are clickable */
+  .bookcard.focus:not(.flipped) .face-front .arrow,
+  .bookcard.focus:not(.flipped) .face-front .flipbtn{pointer-events:auto}
+  .bookcard.focus.flipped .face-back .flipbtn,
+  .bookcard.focus.flipped .face-back .btn{pointer-events:auto}
+  .galdots{display:flex;gap:5px;justify-content:center;align-items:center;margin-top:9px;height:8px}
+  .galdots i{width:5px;height:5px;border-radius:50%;background:rgba(235,206,134,.3);transition:background .3s,transform .3s}
+  .galdots i.on{background:var(--gold-glow);transform:scale(1.4)}
+
+  .face-front .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  .flipbtn{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:10.5px;letter-spacing:.08em;
+    text-transform:uppercase;cursor:pointer;white-space:nowrap;
+    color:var(--gold-glow);background:transparent;border:1px solid rgba(235,206,134,.5);
+    padding:8px 14px;border-radius:999px;transition:background .2s}
+  .flipbtn:hover{background:rgba(235,206,134,.14)}
+
+  /* back face layout */
+  .face-back .inner{justify-content:flex-start;gap:8px}
+  .face-back h3{font-family:'Newsreader',serif;font-weight:600;font-size:clamp(18px,2.4vh,23px);line-height:1.15}
+  .face-back .quote{font-family:'Newsreader',serif;font-style:italic;font-size:clamp(14px,2vh,17px);
+    color:var(--gold-glow);line-height:1.4;margin-top:2px}
+  .face-back p{font-size:clamp(12.5px,1.75vh,14.5px);line-height:1.6;color:#F3E9D5;margin-top:4px}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto;padding-top:8px}
+  .tag{font-family:'Nunito Sans',sans-serif;font-weight:700;font-size:9.5px;
+    letter-spacing:.07em;text-transform:uppercase;padding:4px 10px;border-radius:999px;
+    border:1px solid rgba(235,206,134,.45);color:var(--gold-glow);background:rgba(58,44,30,.35)}
+  .face-back .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+  .face-back .btn{padding:10px 18px;font-size:12.5px}
+
+  /* carousel side dots + hint */
+  #bookdots{position:absolute;right:calc(2px + env(safe-area-inset-right));top:50%;
+    transform:translateY(-50%);z-index:5;display:flex;flex-direction:column;gap:12px}
+  #bookdots button{width:10px;height:10px;border-radius:50%;cursor:pointer;border:none;
+    background:rgba(235,206,134,.3);transition:background .3s,transform .3s;padding:0}
+  #bookdots button.on{background:var(--gold-glow);transform:scale(1.4)}
+  #stagehint{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);z-index:5;
+    font-family:'Nunito Sans',sans-serif;font-size:10px;font-weight:700;letter-spacing:.2em;
+    text-transform:uppercase;color:rgba(235,206,134,.65);white-space:nowrap}
+
+  @media (prefers-reduced-motion:reduce){
+    .gal img,.gal .ph{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header id="site-head">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a class="brand" href="index.html"><span class="g">𝄞</span>Pip &amp; Clef</a>
+    <span class="sep">›</span>
+    <span class="here" aria-current="page">Collection One</span>
+  </nav>
+  <nav aria-label="Site">
+    <a class="plain" href="index.html">The Worlds</a>
+    <a class="plain on" href="collection.html">Collection One</a>
+    <a class="cta" href="mailto:hello@pipandclef.co.uk?subject=Pre-order%20Collection%20One">Pre-order</a>
+  </nav>
+</header>
+
+<main id="wrap">
+  <section id="intro">
+    <div class="eyebrow">First Notes · Collection One</div>
+    <h1>Three worlds. Three pages carried home.</h1>
+    <p>Collection One gathers the first three adventures — pulse, the stave, and the lengths of sound — where music theory is lived long before it is ever named.</p>
+    <p>Illustrated adventure stories for ages 5–11, ABRSM Prep–Grade&nbsp;1.</p>
+    <div class="ctas">
+      <a class="btn btn-primary" href="mailto:hello@pipandclef.co.uk?subject=Pre-order%20Collection%20One">Pre-order Collection One</a>
+      <a class="btn btn-ghost" href="index.html">Fly the worlds</a>
+    </div>
+    <div class="hintline" id="ctlhint">Scroll or drag to turn the shelf · arrows leaf through the art</div>
+  </section>
+
+  <section id="stagewrap" aria-label="The books of Collection One">
+    <div id="persp"><div id="space"></div></div>
+    <div id="bookdots" aria-label="Choose a book"></div>
+    <div id="stagehint">1 · 3</div>
+  </section>
+</main>
+
+<script>
+const BOOKS = [
+  {
+    id:'moors', num:'Book One', title:'The Clockwork Moors', theme:'Pulse & beat',
+    quote:'The bridge only holds for those who keep the beat.',
+    body:'Every mill and machine of the Moors once moved to one shared beat — until the great Pendulum fell still, and nothing would fit together again.',
+    tags:['Pulse & beat','ABRSM Grade 1'],
+    art:['assets/books/moors-01.jpg','assets/books/moors-02.jpg','assets/books/moors-03.jpg',
+         'assets/books/moors-04.jpg','assets/books/moors-05.jpg','assets/books/moors-06.jpg',
+         'assets/books/moors-07.jpg','assets/books/moors-08.jpg','assets/books/moors-09.jpg',
+         'assets/books/moors-10.jpg']
+  },
+  {
+    id:'islands', num:'Book Two', title:'The Stave Islands', theme:'The stave & note names',
+    quote:'Five islands, and every one had forgotten its name.',
+    body:'Five islands rest in a bright sea, each with its own name and voice — but the Treble Clef Lighthouse has gone dark, and no one recalls who lives where.',
+    tags:['The stave & note names','ABRSM Grade 1'],
+    art:['assets/books/islands-01.jpg','assets/books/islands-02.jpg','assets/books/islands-03.jpg',
+         'assets/books/islands-04.jpg','assets/books/islands-05.jpg','assets/books/islands-06.jpg',
+         'assets/books/islands-07.jpg','assets/books/islands-08.jpg','assets/books/islands-09.jpg',
+         'assets/books/islands-10.jpg']
+  },
+  {
+    id:'caldera', num:'Book Three', title:'The Drum Caldera', theme:'Note & rest values',
+    quote:'Even a silence can be a word.',
+    body:'In a drumming volcanic crater the Calderans speak in sounds long and short — and in the held breaths between them. Then the longest and shortest sounds were stolen, and the meaning fell apart.',
+    tags:['Note & rest values','ABRSM Grade 1'],
+    art:['assets/books/caldera-01.jpg', null, null]   // null = placeholder slide
+  }
+];
+
+(function(){
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const space = document.getElementById('space');
+  const stagewrap = document.getElementById('stagewrap');
+  const bookdots = document.getElementById('bookdots');
+  const stagehint = document.getElementById('stagehint');
+  const N = BOOKS.length;
+
+  /* card size from stage */
+  let cardW = 340, cardH = 460;
+  function layout(){
+    const r = stagewrap.getBoundingClientRect();
+    cardH = Math.min(560, Math.max(380, r.height * 0.72));
+    cardW = Math.min(430, Math.max(280, cardH * 0.78, r.width * 0.62));
+    cardW = Math.min(cardW, r.width - 70);
+    cardH = Math.min(cardH, cardW / 0.72);
+    space.style.width = cardW+'px';
+    space.style.height = cardH+'px';
+  }
+  layout();
+  addEventListener('resize', layout);
+
+  /* build cards */
+  const thickness = [-2.2,-1.1,0,1.1,2.2];
+  const cards = BOOKS.map((b, bi) => {
+    const el = document.createElement('div');
+    el.className = 'bookcard';
+    el.style.inset = '0';
+    thickness.forEach((zOff, li) => {
+      const isFront = li === thickness.length-1;
+      const isBack = li === 0;
+      const s = document.createElement('div');
+      if (!isFront && !isBack){
+        s.className = 'slice mid';
+        s.style.transform = `translateZ(${zOff}px)`;
+        el.appendChild(s);
+        return;
+      }
+      s.className = 'slice face ' + (isFront ? 'face-front' : 'face-back');
+      s.style.transform = `translateZ(${zOff}px)` + (isBack ? ' rotateX(180deg)' : '');
+      if (isFront){
+        s.innerHTML =
+          `<div class="inner">`+
+          `<div class="eyebrow">${b.num} · ${b.theme}</div>`+
+          `<div class="gal">`+
+            b.art.map((a,ai)=> a
+              ? `<img data-src="${a}" alt="${b.title} — artwork ${ai+1}">`
+              : `<div class="ph"><div class="glyph">𝄢</div><div class="t">Artwork arriving soon</div><div class="s">The Calderans are still drumming…</div></div>`
+            ).join('')+
+            `<div class="cnt">1 / ${b.art.length}</div>`+
+            `<button class="arrow l" aria-label="Previous artwork">‹</button>`+
+            `<button class="arrow r" aria-label="Next artwork">›</button>`+
+          `</div>`+
+          `<div class="galdots">${b.art.map(()=>'<i></i>').join('')}</div>`+
+          `<div class="foot"><div><h2>${b.title}</h2><div class="theme">${b.theme}</div></div>`+
+          `<button class="flipbtn" aria-label="About this book">About ↻</button></div>`+
+          `</div>`;
+      } else {
+        s.innerHTML =
+          `<div class="inner">`+
+          `<div class="eyebrow">${b.num} · ${b.theme}</div>`+
+          `<h3>${b.title}</h3>`+
+          `<div class="quote">“${b.quote}”</div>`+
+          `<p>${b.body}</p>`+
+          `<div class="tags">${b.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`+
+          `<div class="foot">`+
+          `<a class="btn btn-primary" href="mailto:hello@pipandclef.co.uk?subject=Pre-order%20${encodeURIComponent(b.title)}">Pre-order</a>`+
+          `<button class="flipbtn" aria-label="Back to the cover">Cover ↻</button></div>`+
+          `</div>`;
+      }
+      el.appendChild(s);
+    });
+    space.appendChild(el);
+    return {el, book:b, gi:0, flip:0, flipT:0,
+      imgs:[...el.querySelectorAll('.gal img, .gal .ph')],
+      cnt:el.querySelector('.cnt'),
+      gdots:[...el.querySelectorAll('.galdots i')]};
+  });
+
+  /* gallery behaviour (lazy-load, crossfade) */
+  function galShow(c, i){
+    const n = c.book.art.length;
+    c.gi = ((i % n) + n) % n;
+    c.imgs.forEach((im, k)=>{
+      if (k === c.gi && im.dataset && im.dataset.src && !im.src){ im.src = im.dataset.src; }
+      im.classList.toggle('show', k === c.gi);
+    });
+    c.cnt.textContent = `${c.gi+1} / ${n}`;
+    c.gdots.forEach((d,k)=>d.classList.toggle('on', k === c.gi));
+  }
+  cards.forEach(c => {
+    galShow(c, 0);
+    c.el.querySelector('.arrow.l').addEventListener('click', e=>{ e.stopPropagation(); userTouch(); galShow(c, c.gi-1); });
+    c.el.querySelector('.arrow.r').addEventListener('click', e=>{ e.stopPropagation(); userTouch(); galShow(c, c.gi+1); });
+    c.el.querySelectorAll('.flipbtn').forEach(btn =>
+      btn.addEventListener('click', e=>{ e.stopPropagation(); userTouch(); c.flipT = c.flipT ? 0 : 180; }));
+    ['pointerdown','wheel'].forEach(ev =>
+      c.el.querySelectorAll('.arrow,.flipbtn,.btn').forEach(b =>
+        b.addEventListener(ev, e=>e.stopPropagation())));
+  });
+  /* preload neighbours of first images lazily on idle */
+  const warm = ()=>cards.forEach(c=>c.imgs.forEach(im=>{ if(im.dataset && im.dataset.src && !im.src) im.src = im.dataset.src; }));
+  if (window.requestIdleCallback) requestIdleCallback(warm, {timeout:4000}); else setTimeout(warm, 2500);
+
+  /* carousel input: wheel / drag / keys / dots */
+  let target = 0, prog = 0, lastInput = 0, lastAuto = performance.now();
+  function userTouch(){ lastAuto = performance.now(); }
+  stagewrap.addEventListener('wheel', e=>{
+    e.preventDefault();
+    target += Math.max(-60, Math.min(60, e.deltaY)) * 0.0028;
+    /* never run more than one book ahead of the display — fast wheels advance
+       one settle at a time instead of skipping books */
+    target = Math.max(prog - 1.2, Math.min(prog + 1.2, target));
+    lastInput = performance.now(); userTouch();
+  }, {passive:false});
+  let dragY = null, dragStart = 0;
+  stagewrap.addEventListener('pointerdown', e=>{
+    dragY = e.clientY; dragStart = target;
+    try{ stagewrap.setPointerCapture(e.pointerId); }catch(_){}
+    userTouch();
+  });
+  stagewrap.addEventListener('pointermove', e=>{
+    if (dragY===null) return;
+    target = dragStart - (e.clientY - dragY)/260;
+    lastInput = performance.now();
+  });
+  ['pointerup','pointercancel'].forEach(ev=>stagewrap.addEventListener(ev, ()=>{ dragY = null; }));
+  addEventListener('keydown', e=>{
+    const cur = cards[mod(Math.round(prog), N)];
+    if (e.key==='ArrowDown' || e.key==='PageDown'){ e.preventDefault(); target = Math.round(target)+1; userTouch(); }
+    else if (e.key==='ArrowUp' || e.key==='PageUp'){ e.preventDefault(); target = Math.round(target)-1; userTouch(); }
+    else if (e.key==='ArrowRight'){ galShow(cur, cur.gi+1); userTouch(); }
+    else if (e.key==='ArrowLeft'){ galShow(cur, cur.gi-1); userTouch(); }
+    else if (e.key==='Enter' && document.activeElement === document.body){ cur.flipT = cur.flipT ? 0 : 180; userTouch(); }
+  });
+  const mod = (i,n)=>((i%n)+n)%n;
+  BOOKS.forEach((b,i)=>{
+    const d = document.createElement('button');
+    d.setAttribute('aria-label', b.title);
+    d.addEventListener('pointerdown', e=>e.stopPropagation());
+    d.addEventListener('click', ()=>{
+      let delta = mod(i - Math.round(prog), N);
+      if (delta > N/2) delta -= N;
+      target = Math.round(prog) + delta;
+      userTouch();
+    });
+    bookdots.appendChild(d);
+  });
+  const dotEls = [...bookdots.children];
+  /* deep link #moors etc. */
+  const hashIdx = BOOKS.findIndex(b=>'#'+b.id===location.hash);
+  if (hashIdx > 0){ target = prog = hashIdx; }
+
+  /* pointer tilt */
+  const tilt = {x:0,y:0,tx:0,ty:0};
+  addEventListener('pointermove', e=>{
+    tilt.tx = Math.max(-1, Math.min(1, (e.clientX - innerWidth/2)/(innerWidth/2)));
+    tilt.ty = Math.max(-1, Math.min(1, (e.clientY - innerHeight/2)/(innerHeight/2)));
+  });
+  document.addEventListener('mouseleave', ()=>{ tilt.tx = 0; tilt.ty = 0; });
+
+  /* render loop */
+  let lastFocus = -1, lastHint = '';
+  function frame(now){
+    /* snap to nearest book after input settles */
+    if (now - lastInput > 160 && dragY===null){
+      target += (Math.round(target) - target) * 0.10;
+    }
+    prog += (target - prog) * (reduced ? 1 : 0.12);
+    if (Math.abs(target - prog) < .0006) prog = target;
+    tilt.x += (tilt.tx - tilt.x) * 0.07;
+    tilt.y += (tilt.ty - tilt.y) * 0.07;
+
+    const gap = 30, D = 1300;
+    const stageH = stagewrap.getBoundingClientRect().height;
+
+    cards.forEach((c, i)=>{
+      let off = i - prog;
+      while (off >  N/2) off -= N;
+      while (off < -N/2) off += N;
+      const a = Math.abs(off), sg = Math.sign(off) || 1;
+
+      if (a > 1.32){ c.el.style.visibility = 'hidden'; return; }
+      c.el.style.visibility = 'visible';
+
+      let y, z, rot;
+      if (a <= 1){
+        const t = a*a*(3-2*a);
+        y  = -sg * t * (cardH + gap);
+        z  = 320 - t * 190;
+        rot = t * 128;
+      } else {
+        const t = Math.min(1, a-1), e2 = t*t*(3-2*t);
+        const sEnd = D/(D+60);
+        const yEnd = (stageH/2 + 40)/sEnd + cardH/2;
+        y  = -sg * ((cardH+gap) + e2 * (yEnd - (cardH+gap)));
+        z  = 130 - e2 * 190;
+        rot = 128 + e2 * 50;
+      }
+
+      /* flip easing (About ↻) */
+      c.flip += (c.flipT - c.flip) * (reduced ? 1 : 0.14);
+      const centerFactor = Math.max(0, 1 - a);
+      const tX = -tilt.y * 9 * centerFactor;
+      const tY =  tilt.x * 11 * centerFactor;
+
+      c.el.style.zIndex = Math.round(z + 400);
+      c.el.style.transform =
+        `translateY(${y.toFixed(2)}px) translateZ(${z.toFixed(2)}px)`+
+        ` rotateX(${(-sg*rot + c.flip + tX).toFixed(2)}deg) rotateY(${tY.toFixed(2)}deg) rotateZ(-2deg)`;
+
+      const focus = a < 0.45;
+      c.el.classList.toggle('focus', focus);
+      c.el.classList.toggle('flipped', c.flip > 90);
+      c.el.style.pointerEvents = focus ? 'auto' : 'none';
+    });
+
+    const curIdx = mod(Math.round(prog), N);
+    if (curIdx !== lastFocus){
+      dotEls.forEach((d,k)=>d.classList.toggle('on', k===curIdx));
+      lastFocus = curIdx;
+    }
+    const hint = `${curIdx+1} · ${N}`;
+    if (hint !== lastHint){ stagehint.textContent = hint; lastHint = hint; }
+
+    /* gentle gallery auto-leaf on the focused, unflipped card */
+    if (!reduced && now - lastAuto > 5200){
+      const c = cards[curIdx];
+      if (c.flipT === 0) galShow(c, c.gi+1);
+      lastAuto = now;
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  window.__coll = () => ({prog, target});
+})();
+</script>
+</body>
+</html>
