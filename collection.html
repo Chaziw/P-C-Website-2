@@ -379,20 +379,25 @@ const BOOKS = [
       gdots:[...el.querySelectorAll('.galdots i')]};
   });
 
-  /* size the outline to hug the displayed artwork (layout metrics only —
-     getBoundingClientRect lies under the card's 3D transform) */
+  /* size the outline to hug the artwork's actual laid-out box.
+     offset* metrics are layout values: exact regardless of the card's 3D
+     transform, fonts loading late, or any CSS sizing rule changes. */
   function fitOutline(sl){
     const im = sl.querySelector('img'), o = sl.querySelector('.outline');
-    if (!im || !o || !im.naturalWidth) return;
-    const sw = sl.clientWidth, sh = sl.clientHeight;
-    const s = Math.min((sw-18)/im.naturalWidth, (sh-18)/im.naturalHeight);
-    const w = im.naturalWidth*s, h = im.naturalHeight*s, m = 7;
-    o.style.width  = (w + 2*m).toFixed(1)+'px';
-    o.style.height = (h + 2*m).toFixed(1)+'px';
-    o.style.left = ((sw - w)/2 - m).toFixed(1)+'px';
-    o.style.top  = ((sh - h)/2 - m).toFixed(1)+'px';
+    if (!im || !o || !im.offsetWidth) return;
+    const m = 7;
+    o.style.left   = (im.offsetLeft - m)+'px';
+    o.style.top    = (im.offsetTop  - m)+'px';
+    o.style.width  = (im.offsetWidth  + 2*m)+'px';
+    o.style.height = (im.offsetHeight + 2*m)+'px';
   }
-  addEventListener('resize', ()=>cards.forEach(c=>c.slides.forEach(fitOutline)));
+  const fitAll = ()=>cards.forEach(c=>c.slides.forEach(fitOutline));
+  addEventListener('resize', fitAll);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+  if (window.ResizeObserver){
+    const ro = new ResizeObserver(fitAll);
+    cards.forEach(c=>ro.observe(c.el.querySelector('.gal')));
+  }
 
   /* gallery behaviour (lazy-load, crossfade, per-image caption) */
   function galShow(c, i){
