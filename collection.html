@@ -241,46 +241,46 @@ const BOOKS = [
     quote:'The bridge only holds for those who keep the beat.',
     caps:[
       'Where every hill turns to the same great beat.',
-      'The Moors stretch on — every gear still, every bridge silent.',
       'Tea in the hollow hill, and a page that should not be torn.',
+      'One strong pull to set the beat swinging home.',
+      'The Moors stretch on — every gear still, every bridge silent.',
       'A door opens, and the tuning fork begins to sing.',
-      'A prickly friend who counts his steps in twos.',
-      'The great Pendulum hangs wrapped, and the hall holds its breath.',
       'Rings of sound spread out — one, two, three, four.',
       'Rhythms on paper, numbers in the air.',
+      'A prickly friend who counts his steps in twos.',
       'The fountain plays again for those who kept the pulse.',
-      'One strong pull to set the beat swinging home.'
+      'The great Pendulum hangs wrapped, and the hall holds its breath.'
     ],
     buy:null,   /* Amazon KDP link goes here when ready */
     body:'Every mill and machine of the Moors once moved to one shared beat — until the great Pendulum fell still, and nothing would fit together again.',
     tags:['Pulse & beat','ABRSM Grade 1'],
-    art:['assets/books/moors-01.jpg','assets/books/moors-02.jpg','assets/books/moors-03.jpg',
-         'assets/books/moors-04.jpg','assets/books/moors-05.jpg','assets/books/moors-06.jpg',
-         'assets/books/moors-07.jpg','assets/books/moors-08.jpg','assets/books/moors-09.jpg',
-         'assets/books/moors-10.jpg']
+    art:['assets/books/moors-01.jpg','assets/books/moors-03.jpg','assets/books/moors-10.jpg',
+         'assets/books/moors-02.jpg','assets/books/moors-04.jpg','assets/books/moors-07.jpg',
+         'assets/books/moors-08.jpg','assets/books/moors-05.jpg','assets/books/moors-09.jpg',
+         'assets/books/moors-06.jpg']
   },
   {
     id:'islands', num:'Book Two', title:'The Stave Islands', theme:'The stave & note names',
     quote:'Five islands, and every one had forgotten its name.',
     caps:[
-      'Five bright islands, and not one remembers its name.',
-      'The lantern still burns at the top of the winding tower.',
       'By the fire, the old keeper tells of the lighthouse that sang.',
-      'Charts and letters, and a ledger of every island’s voice.',
-      'The post arrives all at once — and none of it addressed.',
-      'Stepping stones make a path, if you take them in order.',
-      'A page of the Great Score, glowing over the water.',
       'The door of the Treble Clef Lighthouse, shut fast.',
+      'Five bright islands, and not one remembers its name.',
+      'A page of the Great Score, glowing over the water.',
       'Letters home at last, each with the right name.',
-      'Below the waves, an island keeps its secret.'
+      'The post arrives all at once — and none of it addressed.',
+      'Below the waves, an island keeps its secret.',
+      'Stepping stones make a path, if you take them in order.',
+      'Charts and letters, and a ledger of every island’s voice.',
+      'The lantern still burns at the top of the winding tower.'
     ],
     buy:null,   /* Amazon KDP link goes here when ready */
     body:'Five islands rest in a bright sea, each with its own name and voice — but the Treble Clef Lighthouse has gone dark, and no one recalls who lives where.',
     tags:['The stave & note names','ABRSM Grade 1'],
-    art:['assets/books/islands-01.jpg','assets/books/islands-02.jpg','assets/books/islands-03.jpg',
-         'assets/books/islands-04.jpg','assets/books/islands-05.jpg','assets/books/islands-06.jpg',
-         'assets/books/islands-07.jpg','assets/books/islands-08.jpg','assets/books/islands-09.jpg',
-         'assets/books/islands-10.jpg']
+    art:['assets/books/islands-03.jpg','assets/books/islands-08.jpg','assets/books/islands-01.jpg',
+         'assets/books/islands-07.jpg','assets/books/islands-09.jpg','assets/books/islands-05.jpg',
+         'assets/books/islands-10.jpg','assets/books/islands-06.jpg','assets/books/islands-04.jpg',
+         'assets/books/islands-02.jpg']
   },
   {
     id:'caldera', num:'Book Three', title:'The Drum Caldera', theme:'Note & rest values',
@@ -457,7 +457,8 @@ const BOOKS = [
   });
   stagewrap.addEventListener('pointermove', e=>{
     if (dragY===null) return;
-    target = dragStart - (e.clientY - dragY)/260;
+    /* swipe down = next book (deeper into the shelf) */
+    target = dragStart + (e.clientY - dragY)/260;
     lastInput = performance.now();
   });
   ['pointerup','pointercancel'].forEach(ev=>stagewrap.addEventListener(ev, ()=>{ dragY = null; }));
