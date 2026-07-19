@@ -109,14 +109,19 @@
   .face-front .theme{font-family:'Nunito Sans',sans-serif;font-size:10.5px;font-weight:700;
     letter-spacing:.08em;text-transform:uppercase;color:#D8C9AC;margin-top:5px}
 
-  /* gallery window — frameless: art floats on the card itself */
+  /* gallery window — frameless: art floats on the card and bleeds into it */
   .gal{position:relative;flex:1;min-height:0;border-radius:10px;overflow:hidden}
-  .gal img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;
+  .gal .slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     opacity:0;transition:opacity .45s var(--ease-soft)}
-  .gal img.show{opacity:1}
-  .gal .ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:10px;text-align:center;padding:20px;opacity:0;transition:opacity .45s var(--ease-soft)}
-  .gal .ph.show{opacity:1}
+  .gal .slide.show{opacity:1}
+  .gal .slide img{max-width:100%;max-height:100%;width:auto;height:auto;
+    -webkit-mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent),
+                       linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);
+    -webkit-mask-composite:source-in;
+    mask-image:linear-gradient(to right,transparent,#000 8%,#000 92%,transparent),
+               linear-gradient(to bottom,transparent,#000 8%,#000 92%,transparent);
+    mask-composite:intersect}
+  .gal .slide.ph{flex-direction:column;gap:10px;text-align:center;padding:20px}
   .gal .ph .glyph{font-size:44px;color:rgba(235,206,134,.65)}
   .gal .ph .t{font-family:'Newsreader',serif;font-size:17px;color:var(--paper-1)}
   .gal .ph .s{font-family:'Nunito Sans',sans-serif;font-size:11px;letter-spacing:.06em;color:#D8C9AC}
@@ -226,7 +231,18 @@ const BOOKS = [
   {
     id:'moors', num:'Book One', title:'The Clockwork Moors', theme:'Pulse & beat',
     quote:'The bridge only holds for those who keep the beat.',
-    line:'Inside: windmills, brass beetles, and the bridge that keeps the beat.',
+    caps:[
+      'Where every hill turns to the same great beat.',
+      'The Moors stretch on — every gear still, every bridge silent.',
+      'Tea in the hollow hill, and a page that should not be torn.',
+      'A door opens, and the tuning fork begins to sing.',
+      'A prickly friend who counts his steps in twos.',
+      'The great Pendulum hangs wrapped, and the hall holds its breath.',
+      'Rings of sound spread out — one, two, three, four.',
+      'Rhythms on paper, numbers in the air.',
+      'The fountain plays again for those who kept the pulse.',
+      'One strong pull to set the beat swinging home.'
+    ],
     buy:null,   /* Amazon KDP link goes here when ready */
     body:'Every mill and machine of the Moors once moved to one shared beat — until the great Pendulum fell still, and nothing would fit together again.',
     tags:['Pulse & beat','ABRSM Grade 1'],
@@ -238,7 +254,18 @@ const BOOKS = [
   {
     id:'islands', num:'Book Two', title:'The Stave Islands', theme:'The stave & note names',
     quote:'Five islands, and every one had forgotten its name.',
-    line:'Inside: postal gulls, singing stones, and the lighthouse that forgot.',
+    caps:[
+      'Five bright islands, and not one remembers its name.',
+      'The lantern still burns at the top of the winding tower.',
+      'By the fire, the old keeper tells of the lighthouse that sang.',
+      'Charts and letters, and a ledger of every island’s voice.',
+      'The post arrives all at once — and none of it addressed.',
+      'Stepping stones make a path, if you take them in order.',
+      'A page of the Great Score, glowing over the water.',
+      'The door of the Treble Clef Lighthouse, shut fast.',
+      'Letters home at last, each with the right name.',
+      'Below the waves, an island keeps its secret.'
+    ],
     buy:null,   /* Amazon KDP link goes here when ready */
     body:'Five islands rest in a bright sea, each with its own name and voice — but the Treble Clef Lighthouse has gone dark, and no one recalls who lives where.',
     tags:['The stave & note names','ABRSM Grade 1'],
@@ -250,7 +277,11 @@ const BOOKS = [
   {
     id:'caldera', num:'Book Three', title:'The Drum Caldera', theme:'Note & rest values',
     quote:'Even a silence can be a word.',
-    line:'Inside: drum-stone valleys and the silence between the beats.',
+    caps:[
+      'First glimpse: the crater where the drums speak.',
+      'Artwork on its way from the crater.',
+      'Artwork on its way from the crater.'
+    ],
     buy:null,   /* Amazon KDP link goes here when ready */
     body:'In a drumming volcanic crater the Calderans speak in sounds long and short — and in the held breaths between them. Then the longest and shortest sounds were stolen, and the meaning fell apart.',
     tags:['Note & rest values','ABRSM Grade 1'],
@@ -304,14 +335,14 @@ const BOOKS = [
           `<div class="eyebrow">${b.num} · ${b.theme}</div>`+
           `<div class="gal">`+
             b.art.map((a,ai)=> a
-              ? `<img data-src="${a}" alt="${b.title} — artwork ${ai+1}">`
-              : `<div class="ph"><div class="glyph">𝄢</div><div class="t">Artwork arriving soon</div><div class="s">The Calderans are still drumming…</div></div>`
+              ? `<div class="slide"><img data-src="${a}" alt="${b.caps[ai] || b.title+' artwork'}"></div>`
+              : `<div class="slide ph"><div class="glyph">𝄢</div><div class="t">Artwork arriving soon</div><div class="s">The Calderans are still drumming…</div></div>`
             ).join('')+
             `<div class="cnt">1 / ${b.art.length}</div>`+
             `<button class="arrow l" aria-label="Previous artwork">‹</button>`+
             `<button class="arrow r" aria-label="Next artwork">›</button>`+
           `</div>`+
-          `<div class="caption">${b.line}</div>`+
+          `<div class="caption">${b.caps[0]}</div>`+
           `<div class="galdots">${b.art.map(()=>'<i></i>').join('')}</div>`+
           `<div class="foot"><div><h2>${b.title}</h2><div class="theme">${b.theme}</div></div>`+
           `<div class="btns">`+
@@ -334,19 +365,24 @@ const BOOKS = [
     });
     space.appendChild(el);
     return {el, book:b, gi:0, flip:0, flipT:0,
-      imgs:[...el.querySelectorAll('.gal img, .gal .ph')],
+      slides:[...el.querySelectorAll('.gal .slide')],
+      capEl:el.querySelector('.caption'),
       cnt:el.querySelector('.cnt'),
       gdots:[...el.querySelectorAll('.galdots i')]};
   });
 
-  /* gallery behaviour (lazy-load, crossfade) */
+  /* gallery behaviour (lazy-load, crossfade, per-image caption) */
   function galShow(c, i){
     const n = c.book.art.length;
     c.gi = ((i % n) + n) % n;
-    c.imgs.forEach((im, k)=>{
-      if (k === c.gi && im.dataset && im.dataset.src && !im.src){ im.src = im.dataset.src; }
-      im.classList.toggle('show', k === c.gi);
+    c.slides.forEach((sl, k)=>{
+      if (k === c.gi){
+        const im = sl.querySelector('img');
+        if (im && im.dataset.src && !im.src) im.src = im.dataset.src;
+      }
+      sl.classList.toggle('show', k === c.gi);
     });
+    c.capEl.textContent = c.book.caps[c.gi] || '';
     c.cnt.textContent = `${c.gi+1} / ${n}`;
     c.gdots.forEach((d,k)=>d.classList.toggle('on', k === c.gi));
   }
@@ -360,8 +396,11 @@ const BOOKS = [
       c.el.querySelectorAll('.arrow,.flipbtn,.buybtn').forEach(b =>
         b.addEventListener(ev, e=>e.stopPropagation())));
   });
-  /* preload neighbours of first images lazily on idle */
-  const warm = ()=>cards.forEach(c=>c.imgs.forEach(im=>{ if(im.dataset && im.dataset.src && !im.src) im.src = im.dataset.src; }));
+  /* preload remaining images lazily on idle */
+  const warm = ()=>cards.forEach(c=>c.slides.forEach(sl=>{
+    const im = sl.querySelector('img');
+    if (im && im.dataset.src && !im.src) im.src = im.dataset.src;
+  }));
   if (window.requestIdleCallback) requestIdleCallback(warm, {timeout:4000}); else setTimeout(warm, 2500);
 
   /* carousel input: wheel / drag / keys / dots */
