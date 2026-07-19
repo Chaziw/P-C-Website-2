@@ -414,7 +414,17 @@ const BOOKS = [
   const animSrc = a => a ? a.replace('assets/books/','assets/books/anim/').replace(/\.jpg$/,'.mp4') : null;
   function stopAnim(sl){
     const v = sl.querySelector('video');
-    if (v && v.src){ v.classList.remove('on'); v.pause(); v.removeAttribute('src'); v.load(); }
+    if (!v || !v.getAttribute('src')) return;
+    v.pause();
+    /* keep the frozen final frame visible while the slide crossfades away;
+       unload only once the fade has finished */
+    if (v.__unload) clearTimeout(v.__unload);
+    v.__unload = setTimeout(()=>{
+      v.__unload = null;
+      v.classList.remove('on');
+      v.removeAttribute('src');
+      v.load();
+    }, 550);
   }
   function playAnim(c){
     if (reduced || !c.el.classList.contains('focus')) return;
@@ -431,6 +441,8 @@ const BOOKS = [
       sl.appendChild(v);
     }
     if (!v.isConnected) return;   /* removed after a load error */
+    if (v.__unload){ clearTimeout(v.__unload); v.__unload = null; }   /* replay beat a pending unload */
+    v.classList.remove('on');     /* fade in fresh from the still */
     v.src = url;
     fitOutline(sl);
     const p = v.play(); if (p && p.catch) p.catch(()=>{});
