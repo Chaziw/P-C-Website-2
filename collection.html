@@ -70,6 +70,33 @@
   #intro p{font-size:clamp(15px,1.7vw,17px);line-height:1.65;color:#F3E9D5;max-width:52ch;margin-bottom:10px}
   #intro .hintline{font-family:'Nunito Sans',sans-serif;font-size:12px;color:#D8C9AC;margin-top:14px}
   #intro .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px;align-items:center}
+
+  /* launch-list signup */
+  .signup{margin-top:26px;padding:18px 20px 16px;max-width:470px;
+    border:1px solid rgba(235,206,134,.35);border-radius:14px;
+    background:linear-gradient(160deg,rgba(235,206,134,.08),rgba(235,206,134,0) 55%),rgba(58,44,30,.25)}
+  .signup h2{font-family:'Newsreader',serif;font-weight:600;font-size:clamp(20px,2.6vw,26px);
+    margin:2px 0 8px;text-wrap:balance}
+  .signup p{font-size:14.5px;line-height:1.55;color:#F3E9D5;margin-bottom:12px;max-width:none}
+  .signup form{display:flex;flex-direction:column;gap:9px}
+  .signup input[type=text],.signup input[type=email]{
+    background:rgba(36,24,12,.6);border:1px solid rgba(235,206,134,.4);border-radius:10px;
+    padding:11px 14px;color:var(--paper-0);font-family:'Lora',Georgia,serif;font-size:15px;outline:none;
+    transition:border-color .2s}
+  .signup input:focus{border-color:var(--gold-glow)}
+  .signup input::placeholder{color:rgba(243,233,213,.55)}
+  .signup button{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:14px;
+    letter-spacing:.02em;cursor:pointer;border:none;border-radius:999px;padding:13px 24px;
+    background:var(--rust-500);color:#FFF6E8;box-shadow:var(--shadow-md);
+    transition:background .2s,transform .15s var(--ease-soft)}
+  .signup button:hover{background:var(--rust-600);transform:translateY(-2px)}
+  .signup button[disabled]{opacity:.6;pointer-events:none}
+  .signup .fineprint{font-family:'Nunito Sans',sans-serif;font-size:11px;color:#D8C9AC;
+    margin-top:10px;line-height:1.5}
+  .signup .fineprint a{color:var(--gold-glow)}
+  .signup .ok{display:none;font-family:'Newsreader',serif;font-size:17px;line-height:1.5;color:var(--gold-glow)}
+  .signup.done form,.signup.done .fineprint{display:none}
+  .signup.done .ok{display:block}
   .btn{font-family:'Nunito Sans',sans-serif;font-weight:800;font-size:14px;letter-spacing:.02em;
     display:inline-block;padding:13px 24px;border-radius:999px;text-decoration:none;
     transition:transform .15s var(--ease-soft),background .15s var(--ease-soft)}
@@ -214,7 +241,7 @@
   <nav aria-label="Site">
     <a class="plain" href="index.html">The Worlds</a>
     <a class="plain on" href="collection.html">Collection One</a>
-    <a class="cta" href="mailto:hello@pipandclef.co.uk?subject=Pre-order%20Collection%20One">Pre-order</a>
+    <a class="cta" href="#signup">Launch list</a>
   </nav>
 </header>
 
@@ -225,10 +252,26 @@
     <p>Collection One gathers the first three adventures — pulse, the stave, and the lengths of sound — where music theory is lived long before it is ever named.</p>
     <p>Illustrated adventure stories for ages 5–11, ABRSM Prep–Grade&nbsp;1.</p>
     <div class="ctas">
-      <a class="btn btn-primary" href="mailto:hello@pipandclef.co.uk?subject=Pre-order%20Collection%20One">Pre-order Collection One</a>
+      <a class="btn btn-primary" href="#signup">Join the launch list</a>
       <a class="btn btn-ghost" href="index.html">Fly the worlds</a>
     </div>
     <div class="hintline" id="ctlhint">Scroll or drag to turn the shelf · arrows leaf through the art</div>
+
+    <div id="signup" class="signup">
+      <div class="eyebrow">The Launch List</div>
+      <h2>Be first through the door.</h2>
+      <p>Collection One launches this October. Join the list for artwork, previews and launch-day news.</p>
+      <form action="https://assets.mailerlite.com/jsonp/2520196/forms/193537561350637127/subscribe" method="post">
+        <input type="text" name="fields[name]" placeholder="First name (optional)" autocomplete="given-name">
+        <input type="email" name="fields[email]" placeholder="Your email" autocomplete="email" required>
+        <input type="hidden" name="fields[source]" value="website">
+        <input type="hidden" name="ml-submit" value="1">
+        <button type="submit">Join the launch list</button>
+      </form>
+      <div class="fineprint">For grown-ups. A handful of beautiful emails before launch, then the big day —
+        no spam, unsubscribe anytime. <a href="privacy.html">Privacy</a></div>
+      <div class="ok">One more step — check your inbox and click the confirmation link, and you're on the list. 𝄞</div>
+    </div>
   </section>
 
   <section id="stagewrap" aria-label="The books of Collection One">
@@ -358,7 +401,7 @@ const BOOKS = [
           `<div class="galdots">${b.art.map(()=>'<i></i>').join('')}</div>`+
           `<div class="foot"><div><h2>${b.title}</h2><div class="theme">${b.theme}</div></div>`+
           `<div class="btns">`+
-          `<a class="buybtn" href="${b.buy || 'mailto:hello@pipandclef.co.uk?subject=Pre-order%20'+encodeURIComponent(b.title)}">Buy now</a>`+
+          `<a class="buybtn" href="${b.buy || '#signup'}">Buy now</a>`+
           `<button class="flipbtn" aria-label="About this book">About ↻</button></div></div>`+
           `</div>`;
       } else {
@@ -632,6 +675,22 @@ const BOOKS = [
   }
   requestAnimationFrame(frame);
   window.__coll = () => ({prog, target});
+})();
+
+/* launch-list signup: AJAX submit with native-post fallback */
+(function(){
+  const box = document.getElementById('signup');
+  if (!box) return;
+  const form = box.querySelector('form');
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const btn = form.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Joining…';
+    fetch(form.action, { method:'POST', body:new URLSearchParams(new FormData(form)) })
+      .then(r => { if (!r.ok) throw 0; return r.json(); })
+      .then(() => box.classList.add('done'))
+      .catch(() => form.submit());   /* MailerLite's hosted flow as fallback */
+  });
 })();
 </script>
 </body>
